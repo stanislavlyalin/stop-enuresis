@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Стоп Энурез</string>
+    <string name="about">О программе</string>
+    <string name="collectData">Сбор данных</string>
+    <string name="training">Обучение</string>
+    <string name="usage">Использование</string>
+    <string name="settings">Настройки</string>
 </resources>

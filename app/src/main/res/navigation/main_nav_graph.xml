@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/main_nav_graph.xml"
+    app:startDestination="@id/aboutFragment">
+
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.stanislavlyalin.stopenurez.ui.AboutFragment"
+        android:label="@string/about" />
+
+    <fragment
+        android:id="@+id/dataCollectionFragment"
+        android:name="com.stanislavlyalin.stopenurez.ui.DataCollectionFragment"
+        android:label="@string/collectData" />
+
+    <fragment
+        android:id="@+id/trainingFragment"
+        android:name="com.stanislavlyalin.stopenurez.ui.TrainingFragment"
+        android:label="@string/training" />
+
+    <fragment
+        android:id="@+id/usageFragment"
+        android:name="com.stanislavlyalin.stopenurez.ui.UsageFragment"
+        android:label="@string/usage" />
+
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.stanislavlyalin.stopenurez.ui.SettingsFragment"
+        android:label="@string/settings" />
+
+</navigation>
