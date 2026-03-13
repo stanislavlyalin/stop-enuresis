@@ -6,27 +6,27 @@
 
     <fragment
         android:id="@+id/aboutFragment"
-        android:name="com.stanislavlyalin.stopenurez.ui.AboutFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.AboutFragment"
         android:label="@string/about" />
 
     <fragment
         android:id="@+id/dataCollectionFragment"
-        android:name="com.stanislavlyalin.stopenurez.ui.DataCollectionFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.DataCollectionFragment"
         android:label="@string/collectData" />
 
     <fragment
         android:id="@+id/trainingFragment"
-        android:name="com.stanislavlyalin.stopenurez.ui.TrainingFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.TrainingFragment"
         android:label="@string/training" />
 
     <fragment
         android:id="@+id/usageFragment"
-        android:name="com.stanislavlyalin.stopenurez.ui.UsageFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.UsageFragment"
         android:label="@string/usage" />
 
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.stanislavlyalin.stopenurez.ui.SettingsFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.SettingsFragment"
         android:label="@string/settings" />
 
 </navigation>

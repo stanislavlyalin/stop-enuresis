@@ -1,4 +1,4 @@
-package com.stanislavlyalin.stopenurez
+package com.stanislavlyalin.stopenuresis
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity

@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.stanislavlyalin.stopenurez"
+    namespace = "com.stanislavlyalin.stopenuresis"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.stanislavlyalin.stopenurez"
+        applicationId = "com.stanislavlyalin.stopenuresis"
         minSdk = 24
         targetSdk = 34
         versionCode = 1

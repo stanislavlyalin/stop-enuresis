@@ -1,9 +1,9 @@
-package com.stanislavlyalin.stopenurez.ui
+package com.stanislavlyalin.stopenuresis.ui
 
 import android.os.Bundle
 import android.view.View
 import androidx.fragment.app.Fragment
-import com.stanislavlyalin.stopenurez.R
+import com.stanislavlyalin.stopenuresis.R
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
