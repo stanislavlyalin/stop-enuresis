@@ -129,6 +129,40 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
 
+        <TextView
+            android:id="@+id/tvRustlingThresholdExceedanceLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/rustlingThresholdExceedance"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <LinearLayout
+            android:id="@+id/layoutRustlingThresholdExceedance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/seekBarRustlingThresholdExceedance"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="100"
+                android:progress="70" />
+
+            <TextView
+                android:id="@+id/tvRustlingThresholdExceedanceValue"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:gravity="end"
+                android:text="@string/defaultRustlingThresholdExceedanceValue"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
+        </LinearLayout>
+
         <Button
             android:id="@+id/btnSaveSettings"
             android:layout_width="match_parent"

@@ -85,3 +85,5 @@ google-services.json
 # Crashlytics
 
 com_crashlytics_export_strings.xml
+
+wav-analysis/

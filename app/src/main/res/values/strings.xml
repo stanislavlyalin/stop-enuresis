@@ -5,4 +5,23 @@
     <string name="training">Обучение</string>
     <string name="usage">Использование</string>
     <string name="settings">Настройки</string>
+    <string name="volumeThreshold">Порог срабатывания</string>
+    <string name="thresholdLabel">Порог</string>
+    <string name="startRecording">Начать запись</string>
+    <string name="stopRecording">Остановить запись</string>
+    <string name="playAudioFragment">Воспроизвести фрагмент</string>
+    <string name="deleteAudioFragment">Удалить фрагмент</string>
+    <string name="acceptAudioFragment">Принять и сохранить фрагмент</string>
+    <string name="selectionBegin">Начало выделения</string>
+    <string name="selectionEnd">Конец выделения</string>
+    <string name="recordAudioPermissionNeeded">Нужно разрешение на запись звука</string>
+    <string name="failedToInitMicrophone">Не удалось инициализировать микрофон</string>
+    <string name="noAccessToMicrophone">Нет доступа к микрофону</string>
+    <string name="audioRecordingSettingsError">Ошибка параметров аудиозаписи</string>
+    <string name="audioRecordNotInitialized">AudioRecord не инициализирован</string>
+    <string name="rustlingThresholdExceedance">Превышение порога для ёрзания</string>
+    <string name="percentValue">%1$d%%</string>
+    <string name="defaultRustlingThresholdExceedanceValue" formatted="false">70%</string>
+    <string name="audioFragmentDeleted">Фрагмент удалён</string>
+    <string name="audioFragmentSaved">Фрагмент сохранён</string>
 </resources>
