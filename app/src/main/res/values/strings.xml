@@ -24,4 +24,16 @@
     <string name="defaultRustlingThresholdExceedanceValue" formatted="false">70%</string>
     <string name="audioFragmentDeleted">Фрагмент удалён</string>
     <string name="audioFragmentSaved">Фрагмент сохранён</string>
+    <string name="modelNotTrained">Модель не обучена</string>
+    <string name="trainingInProgress">Идёт обучение</string>
+    <string name="modelTrainedWithAccuracy">Модель обучена\nТочность: %1$d%%</string>
+    <string name="trainingDatasetStats">Выборка:\nёрзает: %1$d примеров\nтишина: %2$d примеров</string>
+    <string name="balanceTrainingDataset">Сбалансировать выборку</string>
+    <string name="startTraining">Начать обучение</string>
+    <string name="clearTrainingDataset">Очистить выборку</string>
+    <string name="clearTrainingDatasetDialogMessage">Все файлы обучающей выборки будут удалены. Вы уверены?</string>
+    <string name="confirm">Да</string>
+    <string name="cancel">Отмена</string>
+    <string name="notEnoughTrainingSamples">Недостаточно примеров для обучения</string>
+    <string name="trainingFailed">Не удалось обучить модель</string>
 </resources>
