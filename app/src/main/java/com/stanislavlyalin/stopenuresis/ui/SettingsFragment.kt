@@ -3,7 +3,9 @@ package com.stanislavlyalin.stopenuresis.ui
 import android.os.Bundle
 import android.view.View
 import android.widget.SeekBar
+import android.widget.Switch
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.R
@@ -12,6 +14,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private lateinit var seekBarCooldown: SeekBar
     private lateinit var tvCooldownValue: TextView
+    private lateinit var switchDarkTheme: Switch
     private lateinit var seekBarRustlingThresholdExceedance: SeekBar
     private lateinit var tvRustlingThresholdExceedanceValue: TextView
 
@@ -20,13 +23,29 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         seekBarCooldown = view.findViewById(R.id.seekBarCooldown)
         tvCooldownValue = view.findViewById(R.id.tvCooldownValue)
+        switchDarkTheme = view.findViewById(R.id.switchDarkTheme)
         seekBarRustlingThresholdExceedance =
             view.findViewById(R.id.seekBarRustlingThresholdExceedance)
         tvRustlingThresholdExceedanceValue =
             view.findViewById(R.id.tvRustlingThresholdExceedanceValue)
 
+        setupDarkThemeSetting()
         setupCooldownSetting()
         setupRustlingThresholdExceedanceSetting()
+    }
+
+    private fun setupDarkThemeSetting() {
+        switchDarkTheme.isChecked = AppSettings.isDarkThemeEnabled(requireContext())
+        switchDarkTheme.setOnCheckedChangeListener { _, checked ->
+            AppSettings.setDarkThemeEnabled(requireContext(), checked)
+            AppCompatDelegate.setDefaultNightMode(
+                if (checked) {
+                    AppCompatDelegate.MODE_NIGHT_YES
+                } else {
+                    AppCompatDelegate.MODE_NIGHT_NO
+                }
+            )
+        }
     }
 
     private fun setupCooldownSetting() {
