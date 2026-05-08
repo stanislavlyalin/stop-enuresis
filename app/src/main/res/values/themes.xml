@@ -2,6 +2,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.StopEnuresis" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand_orange</item>
+        <item name="colorOnPrimary">@color/brand_on_orange</item>
+        <item name="colorPrimaryContainer">@color/brand_orange_light</item>
+        <item name="colorOnPrimaryContainer">@color/brand_on_orange</item>
+        <item name="colorSecondary">@color/brand_orange_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSurface">@color/brand_surface</item>
+        <item name="colorOnSurface">@color/brand_on_orange</item>
+        <item name="colorSurfaceVariant">@color/brand_surface_variant</item>
+        <item name="colorOutline">@color/brand_outline</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
         <item name="android:windowLightStatusBar">true</item>
