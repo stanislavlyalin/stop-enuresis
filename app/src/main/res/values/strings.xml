@@ -57,4 +57,12 @@
     <string name="success">Успех!</string>
     <string name="modelFileNotFound">Сначала обучите модель</string>
     <string name="nextAlarmAllowed">Следующее срабатывание не ранее %1$s</string>
+    <string name="dataCollectionNotificationChannel">Сбор данных</string>
+    <string name="dataCollectionNotificationTitle">Идёт запись данных</string>
+    <string name="dataCollectionNotificationText">тишина: %1$d, ёрзает: %2$d</string>
+    <string name="usageNotificationChannel">Запуск</string>
+    <string name="usageNotificationTitle">Мониторинг</string>
+    <string name="usageMonitoringNotificationText">Приложение слушает микрофон</string>
+    <string name="usageAlarmNotificationText">Сработал будильник. Разблокируйте телефон, чтобы выключить.</string>
+    <string name="usagePostAlarmNotificationText">Выберите результат срабатывания</string>
 </resources>

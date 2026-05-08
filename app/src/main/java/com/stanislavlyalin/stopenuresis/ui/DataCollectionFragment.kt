@@ -1,11 +1,13 @@
 package com.stanislavlyalin.stopenuresis.ui
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.media.AudioFormat
-import android.media.AudioRecord
 import android.media.MediaPlayer
-import android.media.MediaRecorder
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -25,12 +27,8 @@ import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.R
-import com.stanislavlyalin.stopenuresis.audio.ManualWavFileWriter
-import com.stanislavlyalin.stopenuresis.audio.SampleFileBuilder
-import com.stanislavlyalin.stopenuresis.audio.StreamingMovingAverageSmoother
+import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
 import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.thread
 
 class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
@@ -40,7 +38,6 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private lateinit var seekBarThreshold: SeekBar
     private lateinit var tvSilenceCounter: TextView
     private lateinit var tvRustlingCounter: TextView
-    private lateinit var sampleFileBuilder: SampleFileBuilder
     private lateinit var audioFragmentsAdapter: AudioFragmentsAdapter
     private lateinit var samplesDir: File
 
@@ -48,26 +45,47 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private var silenceFilesCount = 0
     private var rustlingFilesCount = 0
 
-    private var audioRecord: AudioRecord? = null
-    private var recordingThread: Thread? = null
     private var mediaPlayer: MediaPlayer? = null
-    private val isRecording = AtomicBoolean(false)
 
     private val chartEntries = mutableListOf<Entry>()
     private var chartX = 0f
     private val maxVisiblePoints = 60
-    private val chartTargetPointsPerSecond = 10
-    private val chartSamplesPerPoint = SAMPLE_RATE / chartTargetPointsPerSecond
     private var currentThreshold = AppSettings.DEFAULT_VOLUME_THRESHOLD.toFloat()
+
+    private val recordingStatusReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DataCollectionRecordingService.ACTION_STATUS) return
+            val isRecording = intent.getBooleanExtra(
+                DataCollectionRecordingService.EXTRA_IS_RECORDING,
+                false
+            )
+            silenceFilesCount = intent.getIntExtra(
+                DataCollectionRecordingService.EXTRA_SILENCE_COUNT,
+                0
+            )
+            rustlingFilesCount = intent.getIntExtra(
+                DataCollectionRecordingService.EXTRA_RUSTLING_COUNT,
+                0
+            )
+            setRecordingState(if (isRecording) RecordingState.RECORDING else RecordingState.IDLE)
+            updateSampleCounters()
+            refreshAudioFragmentsList()
+        }
+    }
+
+    private val chartPointsReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DataCollectionRecordingService.ACTION_CHART_POINTS) return
+            if (recordingState != RecordingState.RECORDING) return
+            intent.getFloatArrayExtra(DataCollectionRecordingService.EXTRA_CHART_POINTS)
+                ?.forEach { appendChartPoint(it) }
+        }
+    }
 
     private companion object {
         const val CHART_AXIS_MAX = 500f
         const val THRESHOLD_MAX = 500
 
-        const val SAMPLE_RATE = 16000
-        const val CHANNEL_COUNT = 1
-        const val BITS_PER_SAMPLE = 16
-        const val FRAGMENT_SECONDS = 5
     }
 
     private val requestPermissionLauncher =
@@ -95,45 +113,6 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
         samplesDir = File(requireContext().filesDir, "samples")
 
-        sampleFileBuilder = SampleFileBuilder(
-            fragmentSizeSamples = SAMPLE_RATE * FRAGMENT_SECONDS,
-            sampleRate = SAMPLE_RATE,
-            channelCount = CHANNEL_COUNT,
-            bitsPerSample = BITS_PER_SAMPLE,
-            samplesDir = samplesDir,
-            wavFileWriter = ManualWavFileWriter(),
-            onSampleFileWritten = { file ->
-                activity?.runOnUiThread {
-                    if (
-                        isAdded &&
-                        this@DataCollectionFragment.view != null
-                    ) {
-                        val isSilenceFile = file.name.endsWith("_0.wav")
-                        val isUncheckedRustlingFile = file.name.endsWith("_1_unchecked.wav")
-
-                        if (recordingState == RecordingState.RECORDING) {
-                            when {
-                                isSilenceFile -> {
-                                    silenceFilesCount++
-                                    updateSampleCounters()
-                                }
-                                isUncheckedRustlingFile -> {
-                                    rustlingFilesCount++
-                                    updateSampleCounters()
-                                }
-                            }
-                        }
-
-                        if (isUncheckedRustlingFile) {
-                            refreshAudioFragmentsList()
-                        }
-                    }
-                }
-            }
-        )
-        sampleFileBuilder.setThreshold(currentThreshold)
-        refreshRustlingThresholdExceedanceSetting()
-
         setupChart()
         setupThresholdSeekBar()
         setupAudioFragmentsList()
@@ -149,14 +128,19 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        registerRecordingReceivers()
+        syncRecordingStateFromService()
+    }
+
     override fun onStop() {
         super.onStop()
-        stopRecording()
+        unregisterRecordingReceivers()
         stopPlayback()
     }
 
     override fun onDestroyView() {
-        stopRecording()
         stopPlayback()
         super.onDestroyView()
     }
@@ -184,100 +168,10 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun startRecording() {
         if (recordingState == RecordingState.RECORDING) return
-
-        val channelConfig = AudioFormat.CHANNEL_IN_MONO
-        val audioFormat = AudioFormat.ENCODING_PCM_16BIT
-
-        val minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, channelConfig, audioFormat)
-        if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
-            Toast.makeText(requireContext(),
-                getString(R.string.failedToInitMicrophone), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val bufferSize = minBufferSize * 2
-
-        val record = try {
-            AudioRecord(
-                MediaRecorder.AudioSource.MIC,
-                SAMPLE_RATE,
-                channelConfig,
-                audioFormat,
-                bufferSize
-            )
-        } catch (e: SecurityException) {
-            Toast.makeText(requireContext(), getString(R.string.noAccessToMicrophone), Toast.LENGTH_SHORT).show()
-            return
-        } catch (e: IllegalArgumentException) {
-            Toast.makeText(requireContext(), getString(R.string.audioRecordingSettingsError), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (record.state != AudioRecord.STATE_INITIALIZED) {
-            record.release()
-            Toast.makeText(requireContext(), getString(R.string.audioRecordNotInitialized), Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val smoother = StreamingMovingAverageSmoother(
-            windowSeconds = 1f,
-            sampleRate = SAMPLE_RATE
-        )
-
-        audioRecord = record
-        isRecording.set(true)
         setRecordingState(RecordingState.RECORDING)
         resetChart()
-        smoother.reset()
-        sampleFileBuilder.reset()
-        sampleFileBuilder.setThreshold(currentThreshold)
-        refreshRustlingThresholdExceedanceSetting()
-
-        record.startRecording()
-
-        recordingThread = thread(start = true, name = "AudioRecordThread") {
-            val buffer = ShortArray(bufferSize / 2)
-            val smoothedBuffer = FloatArray(buffer.size)
-
-            var chartAccumulator = 0f
-            var chartAccumulatorCount = 0
-
-            while (isRecording.get()) {
-                val readCount = record.read(buffer, 0, buffer.size)
-                if (readCount <= 0) continue
-
-                smoother.smooth(buffer, readCount, smoothedBuffer)
-                sampleFileBuilder.addSamples(buffer, smoothedBuffer, readCount)
-
-                val chartPoints = ArrayList<Float>()
-
-                for (i in 0 until readCount) {
-                    chartAccumulator += smoothedBuffer[i]
-                    chartAccumulatorCount++
-
-                    if (chartAccumulatorCount >= chartSamplesPerPoint) {
-                        chartPoints.add(chartAccumulator / chartAccumulatorCount.toFloat())
-                        chartAccumulator = 0f
-                        chartAccumulatorCount = 0
-                    }
-                }
-
-
-                if (chartPoints.isNotEmpty()) {
-                    activity?.runOnUiThread {
-                        if (
-                            isAdded &&
-                            this@DataCollectionFragment.view != null &&
-                            recordingState == RecordingState.RECORDING
-                        ) {
-                            for (point in chartPoints) {
-                                appendChartPoint(point)
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        resetSampleCounters()
+        DataCollectionRecordingService.start(requireContext(), currentThreshold)
     }
 
     private fun stopRecording() {
@@ -285,20 +179,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             setRecordingState(RecordingState.IDLE)
             return
         }
-
-        isRecording.set(false)
-
-        try {
-            audioRecord?.stop()
-        } catch (_: IllegalStateException) {
-        }
-
-        audioRecord?.release()
-        audioRecord = null
-
-        recordingThread?.join(300)
-        recordingThread = null
-
+        DataCollectionRecordingService.stop(requireContext())
         setRecordingState(RecordingState.IDLE)
         resetSampleCounters()
     }
@@ -332,13 +213,11 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         seekBarThreshold.max = THRESHOLD_MAX
         currentThreshold = AppSettings.getVolumeThreshold(requireContext()).toFloat()
         seekBarThreshold.progress = currentThreshold.toInt()
-        sampleFileBuilder.setThreshold(currentThreshold)
         updateThresholdLine()
 
         seekBarThreshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 currentThreshold = progress.toFloat()
-                sampleFileBuilder.setThreshold(currentThreshold)
                 updateThresholdLine()
                 if (fromUser) {
                     AppSettings.setVolumeThreshold(requireContext(), progress)
@@ -373,12 +252,6 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         audioFragmentsAdapter.submitFiles(files)
     }
 
-    private fun refreshRustlingThresholdExceedanceSetting() {
-        sampleFileBuilder.setThresholdExceedancePercent(
-            AppSettings.getRustlingThresholdExceedancePercent(requireContext())
-        )
-    }
-
     private fun playAudioFragment(file: File) {
         if (!file.exists()) {
             refreshAudioFragmentsList()
@@ -403,11 +276,12 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         val savedAsSilence = saveRemovedRustlingAsSilence(file)
 
         if (savedAsSilence && file.name.endsWith("_1_unchecked.wav")) {
-            rustlingFilesCount = (rustlingFilesCount - 1).coerceAtLeast(0)
             if (recordingState == RecordingState.RECORDING) {
-                silenceFilesCount++
+                DataCollectionRecordingService.adjustRemovedRustling(requireContext())
+            } else {
+                rustlingFilesCount = (rustlingFilesCount - 1).coerceAtLeast(0)
+                updateSampleCounters()
             }
-            updateSampleCounters()
         }
         refreshAudioFragmentsList()
         Toast.makeText(
@@ -462,6 +336,47 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private fun updateSampleCounters() {
         tvSilenceCounter.text = getString(R.string.silenceCounter, silenceFilesCount)
         tvRustlingCounter.text = getString(R.string.rustlingCounter, rustlingFilesCount)
+    }
+
+    private fun registerRecordingReceivers() {
+        val statusFilter = IntentFilter(DataCollectionRecordingService.ACTION_STATUS)
+        val chartFilter = IntentFilter(DataCollectionRecordingService.ACTION_CHART_POINTS)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requireContext().registerReceiver(
+                recordingStatusReceiver,
+                statusFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+            requireContext().registerReceiver(
+                chartPointsReceiver,
+                chartFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            requireContext().registerReceiver(recordingStatusReceiver, statusFilter)
+            @Suppress("DEPRECATION")
+            requireContext().registerReceiver(chartPointsReceiver, chartFilter)
+        }
+    }
+
+    private fun unregisterRecordingReceivers() {
+        runCatching { requireContext().unregisterReceiver(recordingStatusReceiver) }
+        runCatching { requireContext().unregisterReceiver(chartPointsReceiver) }
+    }
+
+    private fun syncRecordingStateFromService() {
+        silenceFilesCount = DataCollectionRecordingService.silenceCountSnapshot
+        rustlingFilesCount = DataCollectionRecordingService.rustlingCountSnapshot
+        setRecordingState(
+            if (DataCollectionRecordingService.isRecordingNow) {
+                RecordingState.RECORDING
+            } else {
+                RecordingState.IDLE
+            }
+        )
+        updateSampleCounters()
+        refreshAudioFragmentsList()
     }
 
     private fun approveAudioFragment(file: File) {
