@@ -53,12 +53,11 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private val maxVisiblePoints = 60
     private val chartTargetPointsPerSecond = 10
     private val chartSamplesPerPoint = SAMPLE_RATE / chartTargetPointsPerSecond
-    private var currentThreshold = DEFAULT_THRESHOLD.toFloat()
+    private var currentThreshold = AppSettings.DEFAULT_VOLUME_THRESHOLD.toFloat()
 
     private companion object {
         const val CHART_AXIS_MAX = 500f
         const val THRESHOLD_MAX = 500
-        const val DEFAULT_THRESHOLD = 100
 
         const val SAMPLE_RATE = 16000
         const val CHANNEL_COUNT = 1
@@ -303,13 +302,19 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun setupThresholdSeekBar() {
         seekBarThreshold.max = THRESHOLD_MAX
-        seekBarThreshold.progress = DEFAULT_THRESHOLD
+        currentThreshold = AppSettings.getVolumeThreshold(requireContext()).toFloat()
+        seekBarThreshold.progress = currentThreshold.toInt()
+        sampleFileBuilder.setThreshold(currentThreshold)
+        updateThresholdLine()
 
         seekBarThreshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 currentThreshold = progress.toFloat()
                 sampleFileBuilder.setThreshold(currentThreshold)
                 updateThresholdLine()
+                if (fromUser) {
+                    AppSettings.setVolumeThreshold(requireContext(), progress)
+                }
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit

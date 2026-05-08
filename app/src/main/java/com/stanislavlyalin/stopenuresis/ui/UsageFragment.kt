@@ -183,6 +183,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             windowSeconds = 1f,
             sampleRate = SAMPLE_RATE
         )
+        val volumeThreshold = AppSettings.getVolumeThreshold(requireContext()).toFloat()
         val requiredExceedancePercent =
             AppSettings.getRustlingThresholdExceedancePercent(requireContext())
 
@@ -208,7 +209,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
                 for (i in 0 until readCount) {
                     fragmentBuffer[fragmentBufferSize] = buffer[i]
-                    if (smoothedBuffer[i] >= DEFAULT_THRESHOLD) aboveThresholdSamples++
+                    if (smoothedBuffer[i] >= volumeThreshold) aboveThresholdSamples++
                     fragmentBufferSize++
 
                     if (fragmentBufferSize == FRAGMENT_SIZE_SAMPLES) {
@@ -373,7 +374,6 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private companion object {
         const val SAMPLE_RATE = 16000
-        const val DEFAULT_THRESHOLD = 100f
         const val FRAGMENT_SECONDS = 5
         const val FRAGMENT_SIZE_SAMPLES = SAMPLE_RATE * FRAGMENT_SECONDS
         const val CLASSIFICATION_THRESHOLD = 0.5
