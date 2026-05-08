@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
@@ -37,11 +38,15 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private lateinit var lineChartAmplitude: LineChart
     private lateinit var rvAudioFragments: RecyclerView
     private lateinit var seekBarThreshold: SeekBar
+    private lateinit var tvSilenceCounter: TextView
+    private lateinit var tvRustlingCounter: TextView
     private lateinit var sampleFileBuilder: SampleFileBuilder
     private lateinit var audioFragmentsAdapter: AudioFragmentsAdapter
     private lateinit var samplesDir: File
 
     private var recordingState: RecordingState = RecordingState.IDLE
+    private var silenceFilesCount = 0
+    private var rustlingFilesCount = 0
 
     private var audioRecord: AudioRecord? = null
     private var recordingThread: Thread? = null
@@ -86,6 +91,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude = view.findViewById(R.id.lineChartAmplitude)
         rvAudioFragments = view.findViewById(R.id.rvAudioFragments)
         seekBarThreshold = view.findViewById(R.id.seekBarThreshold)
+        tvSilenceCounter = view.findViewById(R.id.tvSilenceCounter)
+        tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
         samplesDir = File(requireContext().filesDir, "samples")
 
         sampleFileBuilder = SampleFileBuilder(
@@ -96,9 +103,28 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             samplesDir = samplesDir,
             wavFileWriter = ManualWavFileWriter(),
             onSampleFileWritten = { file ->
-                if (file.name.endsWith("_unchecked.wav")) {
-                    activity?.runOnUiThread {
-                        if (isAdded && this@DataCollectionFragment.view != null) {
+                activity?.runOnUiThread {
+                    if (
+                        isAdded &&
+                        this@DataCollectionFragment.view != null
+                    ) {
+                        val isSilenceFile = file.name.endsWith("_0.wav")
+                        val isUncheckedRustlingFile = file.name.endsWith("_1_unchecked.wav")
+
+                        if (recordingState == RecordingState.RECORDING) {
+                            when {
+                                isSilenceFile -> {
+                                    silenceFilesCount++
+                                    updateSampleCounters()
+                                }
+                                isUncheckedRustlingFile -> {
+                                    rustlingFilesCount++
+                                    updateSampleCounters()
+                                }
+                            }
+                        }
+
+                        if (isUncheckedRustlingFile) {
                             refreshAudioFragmentsList()
                         }
                     }
@@ -112,6 +138,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         setupThresholdSeekBar()
         setupAudioFragmentsList()
         setRecordingState(RecordingState.IDLE)
+        updateSampleCounters()
         refreshAudioFragmentsList()
 
         btnRecordToggle.setOnClickListener {
@@ -273,6 +300,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         recordingThread = null
 
         setRecordingState(RecordingState.IDLE)
+        resetSampleCounters()
     }
 
     private fun setupChart() {
@@ -372,13 +400,68 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun removeAudioFragment(file: File) {
         stopPlayback()
-        if (file.exists()) file.delete()
+        val savedAsSilence = saveRemovedRustlingAsSilence(file)
+
+        if (savedAsSilence && file.name.endsWith("_1_unchecked.wav")) {
+            rustlingFilesCount = (rustlingFilesCount - 1).coerceAtLeast(0)
+            if (recordingState == RecordingState.RECORDING) {
+                silenceFilesCount++
+            }
+            updateSampleCounters()
+        }
         refreshAudioFragmentsList()
         Toast.makeText(
             requireContext(),
-            getString(R.string.audioFragmentDeleted),
+            getString(
+                if (savedAsSilence) {
+                    R.string.audioFragmentSavedAsSilence
+                } else {
+                    R.string.audioFragmentDeleted
+                }
+            ),
             Toast.LENGTH_SHORT
         ).show()
+    }
+
+    private fun saveRemovedRustlingAsSilence(file: File): Boolean {
+        if (!file.name.endsWith("_1_unchecked.wav")) return false
+        if (!file.exists()) return false
+
+        val silenceFile = buildSilenceFileForRemovedRustling(file)
+        if (file.renameTo(silenceFile)) return true
+
+        return runCatching {
+            file.copyTo(silenceFile, overwrite = false)
+            file.delete()
+            true
+        }.getOrDefault(false)
+    }
+
+    private fun buildSilenceFileForRemovedRustling(file: File): File {
+        val baseName = file.name.replace("_1_unchecked.wav", "_0.wav")
+        var silenceFile = File(file.parentFile, baseName)
+        var duplicateIndex = 1
+
+        while (silenceFile.exists()) {
+            silenceFile = File(
+                file.parentFile,
+                baseName.replace("_0.wav", "_removed_${duplicateIndex}_0.wav")
+            )
+            duplicateIndex++
+        }
+
+        return silenceFile
+    }
+
+    private fun resetSampleCounters() {
+        silenceFilesCount = 0
+        rustlingFilesCount = 0
+        updateSampleCounters()
+    }
+
+    private fun updateSampleCounters() {
+        tvSilenceCounter.text = getString(R.string.silenceCounter, silenceFilesCount)
+        tvRustlingCounter.text = getString(R.string.rustlingCounter, rustlingFilesCount)
     }
 
     private fun approveAudioFragment(file: File) {

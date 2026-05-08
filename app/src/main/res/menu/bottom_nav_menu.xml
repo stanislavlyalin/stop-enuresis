@@ -4,26 +4,26 @@
     <item
         android:id="@+id/aboutFragment"
         android:icon="@android:drawable/ic_menu_info_details"
-        android:title="@string/about" />
+        android:title="@string/bottomNavAbout" />
 
     <item
         android:id="@+id/dataCollectionFragment"
         android:icon="@android:drawable/ic_btn_speak_now"
-        android:title="@string/collectData" />
+        android:title="@string/bottomNavCollectData" />
 
     <item
         android:id="@+id/trainingFragment"
         android:icon="@android:drawable/ic_popup_sync"
-        android:title="@string/training" />
+        android:title="@string/bottomNavTraining" />
 
     <item
         android:id="@+id/usageFragment"
-        android:icon="@android:drawable/ic_lock_idle_alarm"
-        android:title="@string/usage" />
+        android:icon="@android:drawable/ic_media_play"
+        android:title="@string/bottomNavUsage" />
 
     <item
         android:id="@+id/settingsFragment"
         android:icon="@android:drawable/ic_menu_manage"
-        android:title="@string/settings" />
+        android:title="@string/bottomNavSettings" />
 
 </menu>

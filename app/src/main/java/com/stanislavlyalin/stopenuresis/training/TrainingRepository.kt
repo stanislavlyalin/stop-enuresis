@@ -23,7 +23,7 @@ class TrainingRepository(
     fun getDatasetStats(): TrainingDatasetStats {
         val files = listSampleFiles()
         return TrainingDatasetStats(
-            positiveCount = files.count { getLabel(it) == 1 },
+            positiveCount = files.count { it.name.endsWith("_1.wav") },
             negativeCount = files.count { getLabel(it) == 0 }
         )
     }

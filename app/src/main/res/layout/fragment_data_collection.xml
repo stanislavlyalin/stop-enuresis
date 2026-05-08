@@ -60,6 +60,32 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
+    <TextView
+        android:id="@+id/tvSilenceCounter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/silenceCounterInitial"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="#2E7D32"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:text="тишина: 0" />
+
+    <TextView
+        android:id="@+id/tvRustlingCounter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/rustlingCounterInitial"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="#C62828"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="ёрзает: 0" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAudioFragments"
         android:layout_width="0dp"
@@ -69,7 +95,7 @@
         android:paddingBottom="8dp"
         tools:itemCount="2"
         tools:listitem="@layout/item_audio_fragment_placeholder"
-        app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
+        app:layout_constraintTop_toBottomOf="@id/tvSilenceCounter"
         app:layout_constraintBottom_toTopOf="@id/btnRecordToggle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

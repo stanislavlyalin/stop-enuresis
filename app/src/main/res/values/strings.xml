@@ -5,7 +5,16 @@
     <string name="training">Обучение</string>
     <string name="usage">Использование</string>
     <string name="settings">Настройки</string>
+    <string name="bottomNavAbout">О ПРОГРАММЕ</string>
+    <string name="bottomNavCollectData">СБОР ДАННЫХ</string>
+    <string name="bottomNavTraining">ОБУЧЕНИЕ</string>
+    <string name="bottomNavUsage">ЗАПУСК</string>
+    <string name="bottomNavSettings">НАСТРОЙКИ</string>
     <string name="volumeThreshold">Порог срабатывания</string>
+    <string name="silenceCounterInitial">тишина: 0</string>
+    <string name="rustlingCounterInitial">ёрзает: 0</string>
+    <string name="silenceCounter">тишина: %1$d</string>
+    <string name="rustlingCounter">ёрзает: %1$d</string>
     <string name="thresholdLabel">Порог</string>
     <string name="startRecording">Начать запись</string>
     <string name="stopRecording">Остановить запись</string>
@@ -23,8 +32,9 @@
     <string name="percentValue">%1$d%%</string>
     <string name="defaultRustlingThresholdExceedanceValue" formatted="false">70%</string>
     <string name="audioFragmentDeleted">Фрагмент удалён</string>
+    <string name="audioFragmentSavedAsSilence">Фрагмент сохранён как тишина</string>
     <string name="audioFragmentSaved">Фрагмент сохранён</string>
-    <string name="modelNotTrained">Модель не обучена</string>
+    <string name="modelNotTrained">Модель\nне обучена</string>
     <string name="trainingInProgress">Идёт обучение</string>
     <string name="modelTrainedWithAccuracy">Модель обучена\nТочность: %1$d%%</string>
     <string name="trainingDatasetStats">Выборка:\nёрзает: %1$d примеров\nтишина: %2$d примеров</string>

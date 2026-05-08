@@ -7,4 +7,13 @@
         <item name="android:windowLightStatusBar">true</item>
     </style>
 
+    <style name="BottomNavigationItemText">
+        <item name="android:ellipsize">none</item>
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:lines">1</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:textSize">8sp</item>
+    </style>
+
 </resources>
