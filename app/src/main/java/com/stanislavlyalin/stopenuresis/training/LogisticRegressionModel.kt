@@ -44,4 +44,20 @@ data class LogisticRegressionModel(
             else -> 1.0 / (1.0 + kotlin.math.exp(-value))
         }
     }
+
+    companion object {
+        fun fromJson(jsonObject: JSONObject): LogisticRegressionModel {
+            return LogisticRegressionModel(
+                weights = jsonObject.getJSONArray("weights").toDoubleArray(),
+                bias = jsonObject.getDouble("bias"),
+                featureMeans = jsonObject.getJSONArray("featureMeans").toDoubleArray(),
+                featureStdDevs = jsonObject.getJSONArray("featureStdDevs").toDoubleArray(),
+                accuracy = jsonObject.optDouble("accuracy", 0.0)
+            )
+        }
+
+        private fun JSONArray.toDoubleArray(): DoubleArray {
+            return DoubleArray(length()) { index -> getDouble(index) }
+        }
+    }
 }

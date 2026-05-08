@@ -36,4 +36,15 @@
     <string name="cancel">Отмена</string>
     <string name="notEnoughTrainingSamples">Недостаточно примеров для обучения</string>
     <string name="trainingFailed">Не удалось обучить модель</string>
+    <string name="usageHello">Привет!</string>
+    <string name="usageSleeping">Z-z-z...</string>
+    <string name="usageGoToToilet">Кажется, пора\nв туалет</string>
+    <string name="usageContinue">Продолжим?</string>
+    <string name="startListening">Начать слушать</string>
+    <string name="stopListening">Остановить</string>
+    <string name="turnOffAlarm">Выключить будильник</string>
+    <string name="falseAlarm">Ложная тревога</string>
+    <string name="success">Успех!</string>
+    <string name="modelFileNotFound">Сначала обучите модель</string>
+    <string name="nextAlarmAllowed">Следующее срабатывание не ранее %1$s</string>
 </resources>
