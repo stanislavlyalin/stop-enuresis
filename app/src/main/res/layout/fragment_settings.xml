@@ -109,5 +109,39 @@
                 android:textAppearance="?attr/textAppearanceBodyLarge" />
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvAlarmRustlingDetectionsPerMinuteLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/alarmRustlingDetectionsPerMinute"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <LinearLayout
+            android:id="@+id/layoutAlarmRustlingDetectionsPerMinute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/seekBarAlarmRustlingDetectionsPerMinute"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="11"
+                android:progress="2" />
+
+            <TextView
+                android:id="@+id/tvAlarmRustlingDetectionsPerMinuteValue"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:gravity="end"
+                android:text="3"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

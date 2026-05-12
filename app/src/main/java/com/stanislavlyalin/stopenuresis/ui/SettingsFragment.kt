@@ -17,6 +17,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var switchDarkTheme: Switch
     private lateinit var seekBarRustlingThresholdExceedance: SeekBar
     private lateinit var tvRustlingThresholdExceedanceValue: TextView
+    private lateinit var seekBarAlarmRustlingDetectionsPerMinute: SeekBar
+    private lateinit var tvAlarmRustlingDetectionsPerMinuteValue: TextView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -28,10 +30,15 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             view.findViewById(R.id.seekBarRustlingThresholdExceedance)
         tvRustlingThresholdExceedanceValue =
             view.findViewById(R.id.tvRustlingThresholdExceedanceValue)
+        seekBarAlarmRustlingDetectionsPerMinute =
+            view.findViewById(R.id.seekBarAlarmRustlingDetectionsPerMinute)
+        tvAlarmRustlingDetectionsPerMinuteValue =
+            view.findViewById(R.id.tvAlarmRustlingDetectionsPerMinuteValue)
 
         setupDarkThemeSetting()
         setupCooldownSetting()
         setupRustlingThresholdExceedanceSetting()
+        setupAlarmRustlingDetectionsPerMinuteSetting()
     }
 
     private fun setupDarkThemeSetting() {
@@ -105,6 +112,41 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun updateRustlingThresholdExceedanceValue(value: Int) {
         tvRustlingThresholdExceedanceValue.text =
             getString(R.string.percentValue, value)
+    }
+
+    private fun setupAlarmRustlingDetectionsPerMinuteSetting() {
+        seekBarAlarmRustlingDetectionsPerMinute.max = 11
+        val value = AppSettings.getAlarmRustlingDetectionsPerMinute(requireContext())
+        seekBarAlarmRustlingDetectionsPerMinute.progress = value - 1
+        updateAlarmRustlingDetectionsPerMinuteValue(value)
+
+        seekBarAlarmRustlingDetectionsPerMinute.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(
+                    seekBar: SeekBar?,
+                    progress: Int,
+                    fromUser: Boolean
+                ) {
+                    val detectionsPerMinute = progress + 1
+                    updateAlarmRustlingDetectionsPerMinuteValue(detectionsPerMinute)
+                    if (fromUser) {
+                        AppSettings.setAlarmRustlingDetectionsPerMinute(
+                            requireContext(),
+                            detectionsPerMinute
+                        )
+                    }
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+
+                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+            }
+        )
+    }
+
+    private fun updateAlarmRustlingDetectionsPerMinuteValue(value: Int) {
+        tvAlarmRustlingDetectionsPerMinuteValue.text =
+            getString(R.string.integerValue, value)
     }
 
     private fun updateCooldownValue(value: Int) {

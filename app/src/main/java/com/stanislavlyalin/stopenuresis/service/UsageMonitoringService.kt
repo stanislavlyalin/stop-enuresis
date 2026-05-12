@@ -30,6 +30,7 @@ import com.stanislavlyalin.stopenuresis.training.WavAudio
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
+import java.util.ArrayDeque
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.atomic.AtomicBoolean
@@ -138,6 +139,8 @@ class UsageMonitoringService : Service() {
         )
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
         val requiredExceedancePercent = AppSettings.getRustlingThresholdExceedancePercent(this)
+        val requiredRustlingDetectionsPerMinute =
+            AppSettings.getAlarmRustlingDetectionsPerMinute(this)
 
         audioRecord = record
         isListening.set(true)
@@ -154,6 +157,8 @@ class UsageMonitoringService : Service() {
             val fragmentBuffer = ShortArray(FRAGMENT_SIZE_SAMPLES)
             var fragmentBufferSize = 0
             var aboveThresholdSamples = 0
+            var alarmTriggerPosted = false
+            val rustlingDetectionTimes = ArrayDeque<Long>()
 
             while (isListening.get()) {
                 val readCount = record.read(buffer, 0, buffer.size)
@@ -175,7 +180,18 @@ class UsageMonitoringService : Service() {
                         fragmentBufferSize = 0
                         aboveThresholdSamples = 0
 
-                        if (shouldClassify && canTriggerAlarm() && isRustling(model, fragment)) {
+                        if (
+                            !alarmTriggerPosted &&
+                            shouldClassify &&
+                            canTriggerAlarm() &&
+                            isRustling(model, fragment)
+                        ) {
+                            val now = SystemClock.elapsedRealtime()
+                            addRustlingDetection(rustlingDetectionTimes, now)
+                            if (rustlingDetectionTimes.size < requiredRustlingDetectionsPerMinute) {
+                                continue
+                            }
+                            alarmTriggerPosted = true
                             mainHandler.post {
                                 if (usageState == STATE_MONITORING) triggerAlarm()
                             }
@@ -347,6 +363,14 @@ class UsageMonitoringService : Service() {
         return model.predictProbability(features) >= CLASSIFICATION_THRESHOLD
     }
 
+    private fun addRustlingDetection(detectionTimes: ArrayDeque<Long>, nowElapsedRealtime: Long) {
+        detectionTimes.addLast(nowElapsedRealtime)
+        val oldestAllowed = nowElapsedRealtime - MINUTE_MS
+        while (detectionTimes.isNotEmpty() && detectionTimes.peekFirst() < oldestAllowed) {
+            detectionTimes.removeFirst()
+        }
+    }
+
     private fun loadModel(): LogisticRegressionModel? {
         return runCatching {
             LogisticRegressionModel.fromJson(JSONObject(modelFile().readText()))
@@ -390,6 +414,7 @@ class UsageMonitoringService : Service() {
         private const val ALARM_VOLUME_PERCENT = 100
         private const val ALARM_TONE_MS = 450
         private const val ALARM_REPEAT_MS = 1000L
+        private const val MINUTE_MS = 60L * 1000L
         private const val HOUR_MS = 60L * 60L * 1000L
 
         fun start(context: Context) {

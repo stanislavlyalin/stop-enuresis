@@ -36,6 +36,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private lateinit var lineChartAmplitude: LineChart
     private lateinit var rvAudioFragments: RecyclerView
     private lateinit var seekBarThreshold: SeekBar
+    private lateinit var tvThresholdLabel: TextView
     private lateinit var tvSilenceCounter: TextView
     private lateinit var tvRustlingCounter: TextView
     private lateinit var audioFragmentsAdapter: AudioFragmentsAdapter
@@ -83,8 +84,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private companion object {
-        const val CHART_AXIS_MAX = 500f
-        const val THRESHOLD_MAX = 500
+        const val CHART_AXIS_MAX = 200f
+        const val THRESHOLD_MAX = 200
 
     }
 
@@ -109,6 +110,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude = view.findViewById(R.id.lineChartAmplitude)
         rvAudioFragments = view.findViewById(R.id.rvAudioFragments)
         seekBarThreshold = view.findViewById(R.id.seekBarThreshold)
+        tvThresholdLabel = view.findViewById(R.id.tvThresholdLabel)
         tvSilenceCounter = view.findViewById(R.id.tvSilenceCounter)
         tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
         samplesDir = File(requireContext().filesDir, "samples")
@@ -213,11 +215,13 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         seekBarThreshold.max = THRESHOLD_MAX
         currentThreshold = AppSettings.getVolumeThreshold(requireContext()).toFloat()
         seekBarThreshold.progress = currentThreshold.toInt()
+        updateThresholdValueLabel()
         updateThresholdLine()
 
         seekBarThreshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 currentThreshold = progress.toFloat()
+                updateThresholdValueLabel()
                 updateThresholdLine()
                 if (fromUser) {
                     AppSettings.setVolumeThreshold(requireContext(), progress)
@@ -424,12 +428,19 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         val axisLeft = lineChartAmplitude.axisLeft
         axisLeft.removeAllLimitLines()
 
-        val thresholdLine = LimitLine(currentThreshold, getString(R.string.thresholdLabel))
+        val thresholdLine = LimitLine(
+            currentThreshold,
+            getString(R.string.thresholdLabel, currentThreshold.toInt())
+        )
         thresholdLine.lineWidth = 2f
         thresholdLine.enableDashedLine(12f, 8f, 0f)
 
         axisLeft.addLimitLine(thresholdLine)
         lineChartAmplitude.invalidate()
+    }
+
+    private fun updateThresholdValueLabel() {
+        tvThresholdLabel.text = getString(R.string.volumeThresholdValue, currentThreshold.toInt())
     }
 
     private fun appendChartPoint(value: Float) {
