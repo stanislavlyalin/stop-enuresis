@@ -107,6 +107,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private companion object {
         const val CHART_AXIS_MAX = 200f
+        const val CHART_AXIS_STEP = 25f
+        const val CHART_AXIS_LABEL_COUNT = 9
         const val THRESHOLD_MAX = 200
         const val PLAYBACK_PROGRESS_UPDATE_MS = 50L
 
@@ -220,6 +222,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude.axisRight.isEnabled = false
         lineChartAmplitude.axisLeft.axisMinimum = 0f
         lineChartAmplitude.axisLeft.axisMaximum = CHART_AXIS_MAX
+        lineChartAmplitude.axisLeft.granularity = CHART_AXIS_STEP
+        lineChartAmplitude.axisLeft.setLabelCount(CHART_AXIS_LABEL_COUNT, true)
         lineChartAmplitude.axisLeft.setDrawGridLines(true)
 
         lineChartAmplitude.xAxis.position = XAxis.XAxisPosition.BOTTOM

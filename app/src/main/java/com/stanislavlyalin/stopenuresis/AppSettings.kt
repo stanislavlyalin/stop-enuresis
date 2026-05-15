@@ -3,7 +3,7 @@ package com.stanislavlyalin.stopenuresis
 import android.content.Context
 
 object AppSettings {
-    const val DEFAULT_VOLUME_THRESHOLD = 100
+    const val DEFAULT_VOLUME_THRESHOLD = 75
     const val DEFAULT_RUSTLING_THRESHOLD_EXCEEDANCE_PERCENT = 70
     const val DEFAULT_COOLDOWN_HOURS = 2
     const val DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE = 3
