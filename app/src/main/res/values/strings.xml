@@ -44,6 +44,7 @@
     <string name="modelImportSuccess">Модель импортирована</string>
     <string name="modelImportFailed">Не удалось импортировать модель</string>
     <string name="modelExportFailed">Не удалось экспортировать модель</string>
+    <string name="appVersion">Версия: %1$s</string>
     <string name="audioFragmentDeleted">Фрагмент удалён</string>
     <string name="audioFragmentSavedAsSilence">Фрагмент сохранён как тишина</string>
     <string name="audioFragmentSaved">Фрагмент сохранён</string>

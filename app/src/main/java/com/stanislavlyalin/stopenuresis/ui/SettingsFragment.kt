@@ -15,6 +15,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.AppStorage
+import com.stanislavlyalin.stopenuresis.BuildConfig
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
 import org.json.JSONObject
@@ -28,6 +29,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var tvRustlingThresholdExceedanceValue: TextView
     private lateinit var seekBarAlarmRustlingDetectionsPerMinute: SeekBar
     private lateinit var tvAlarmRustlingDetectionsPerMinuteValue: TextView
+    private lateinit var tvAppVersion: TextView
     private lateinit var btnExportModel: Button
     private lateinit var btnImportModel: Button
 
@@ -51,6 +53,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             view.findViewById(R.id.seekBarAlarmRustlingDetectionsPerMinute)
         tvAlarmRustlingDetectionsPerMinuteValue =
             view.findViewById(R.id.tvAlarmRustlingDetectionsPerMinuteValue)
+        tvAppVersion = view.findViewById(R.id.tvAppVersion)
         btnExportModel = view.findViewById(R.id.btnExportModel)
         btnImportModel = view.findViewById(R.id.btnImportModel)
 
@@ -59,6 +62,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         setupRustlingThresholdExceedanceSetting()
         setupAlarmRustlingDetectionsPerMinuteSetting()
         setupModelTransferButtons()
+        tvAppVersion.text = getString(R.string.appVersion, BuildConfig.GIT_COMMIT)
     }
 
     private fun setupDarkThemeSetting() {

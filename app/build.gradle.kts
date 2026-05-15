@@ -1,7 +1,23 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+import java.io.ByteArrayOutputStream
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
 }
+
+fun gitCommitHash(): String {
+    val output = ByteArrayOutputStream()
+    return runCatching {
+        exec {
+            commandLine("git", "rev-parse", "--short", "HEAD")
+            standardOutput = output
+        }
+        output.toString().trim()
+    }.getOrDefault("unknown")
+}
+
+val currentGitCommit = gitCommitHash()
 
 android {
     namespace = "com.stanislavlyalin.stopenuresis"
@@ -15,6 +31,7 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GIT_COMMIT", "\"$currentGitCommit\"")
     }
 
     buildTypes {
@@ -32,6 +49,16 @@ android {
     }
     kotlinOptions {
         jvmTarget = "1.8"
+    }
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+android.applicationVariants.all {
+    outputs.all {
+        (this as BaseVariantOutputImpl).outputFileName =
+            "stop-enuresis-$currentGitCommit.apk"
     }
 }
 
