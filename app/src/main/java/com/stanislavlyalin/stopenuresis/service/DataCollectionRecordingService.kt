@@ -16,6 +16,7 @@ import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.stanislavlyalin.stopenuresis.AppSettings
+import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.MainActivity
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.audio.ManualWavFileWriter
@@ -101,7 +102,8 @@ class DataCollectionRecordingService : Service() {
             return
         }
 
-        val samplesDir = File(filesDir, "samples")
+        AppStorage.migrateLegacyData(this)
+        val samplesDir = AppStorage.samplesDir(this)
         val sampleFileBuilder = SampleFileBuilder(
             fragmentSizeSamples = SAMPLE_RATE * FRAGMENT_SECONDS,
             sampleRate = SAMPLE_RATE,

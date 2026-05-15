@@ -6,7 +6,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import java.io.File
 
 class MainActivity : AppCompatActivity() {
 
@@ -20,6 +19,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         super.onCreate(savedInstanceState)
+        AppStorage.migrateLegacyData(this)
         setContentView(R.layout.activity_main)
 
         val navHostFragment =
@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasTrainingSamples(): Boolean {
-        val samplesDir = File(filesDir, "samples")
+        val samplesDir = AppStorage.samplesDir(this)
         return samplesDir.listFiles { file ->
             file.isFile && (
                 file.name.endsWith("_1.wav") ||
@@ -56,6 +56,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasTrainedModel(): Boolean {
-        return File(filesDir, "model/stopenuresis_model.json").exists()
+        return AppStorage.modelFile(this).exists()
     }
 }

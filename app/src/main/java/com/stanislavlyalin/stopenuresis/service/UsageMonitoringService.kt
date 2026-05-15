@@ -21,6 +21,7 @@ import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.stanislavlyalin.stopenuresis.AppSettings
+import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.MainActivity
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.audio.StreamingMovingAverageSmoother
@@ -378,7 +379,7 @@ class UsageMonitoringService : Service() {
     }
 
     private fun modelFile(): File {
-        return File(filesDir, "model/stopenuresis_model.json")
+        return AppStorage.modelFile(this)
     }
 
     companion object {

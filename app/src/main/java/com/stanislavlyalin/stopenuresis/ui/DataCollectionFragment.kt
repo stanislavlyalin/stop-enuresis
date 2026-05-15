@@ -28,6 +28,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.stanislavlyalin.stopenuresis.AppSettings
+import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
 import java.io.File
@@ -136,7 +137,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         tvSilenceCounter = view.findViewById(R.id.tvSilenceCounter)
         tvRemainingCounter = view.findViewById(R.id.tvRemainingCounter)
         tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
-        samplesDir = File(requireContext().filesDir, "samples")
+        samplesDir = AppStorage.samplesDir(requireContext())
 
         setupChart()
         setupThresholdSeekBar()

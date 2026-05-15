@@ -25,6 +25,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.stanislavlyalin.stopenuresis.AppSettings
+import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.service.UsageMonitoringService
 import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
@@ -310,7 +311,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     }
 
     private fun modelFile(): File {
-        return File(requireContext().filesDir, "model/stopenuresis_model.json")
+        return AppStorage.modelFile(requireContext())
     }
 
     private enum class UsageState {

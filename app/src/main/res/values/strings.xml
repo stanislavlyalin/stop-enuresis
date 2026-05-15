@@ -37,6 +37,13 @@
     <string name="defaultRustlingThresholdExceedanceValue" formatted="false">70%</string>
     <string name="alarmRustlingDetectionsPerMinute">Число срабатываний детектора в минуту для активации будильника</string>
     <string name="integerValue">%1$d</string>
+    <string name="exportModel">Экспорт модели</string>
+    <string name="importModel">Импорт модели</string>
+    <string name="shareModelChooserTitle">Экспорт модели</string>
+    <string name="modelExportNoModel">Сначала обучите модель</string>
+    <string name="modelImportSuccess">Модель импортирована</string>
+    <string name="modelImportFailed">Не удалось импортировать модель</string>
+    <string name="modelExportFailed">Не удалось экспортировать модель</string>
     <string name="audioFragmentDeleted">Фрагмент удалён</string>
     <string name="audioFragmentSavedAsSilence">Фрагмент сохранён как тишина</string>
     <string name="audioFragmentSaved">Фрагмент сохранён</string>

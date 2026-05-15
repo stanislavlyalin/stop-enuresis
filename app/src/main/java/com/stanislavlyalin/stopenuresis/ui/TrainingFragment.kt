@@ -8,10 +8,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.training.TrainingDatasetStats
 import com.stanislavlyalin.stopenuresis.training.TrainingRepository
-import java.io.File
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
@@ -37,8 +37,8 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         btnClearTrainingDataset = view.findViewById(R.id.btnClearTrainingDataset)
 
         trainingRepository = TrainingRepository(
-            samplesDir = File(requireContext().filesDir, "samples"),
-            modelFile = File(requireContext().filesDir, "model/stopenuresis_model.json")
+            samplesDir = AppStorage.samplesDir(requireContext()),
+            modelFile = AppStorage.modelFile(requireContext())
         )
 
         btnStartTraining.setOnClickListener { startTraining() }
