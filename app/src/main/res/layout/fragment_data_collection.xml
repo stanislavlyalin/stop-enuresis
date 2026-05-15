@@ -86,6 +86,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:text="ёрзает: 0" />
 
+    <TextView
+        android:id="@+id/tvRemainingCounter"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="@string/remainingCounterInitial"
+        android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="@color/black"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@id/tvRustlingCounter"
+        app:layout_constraintStart_toEndOf="@id/tvSilenceCounter"
+        app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
+        tools:text="осталось: 35" />
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvAudioFragments"
         android:layout_width="0dp"

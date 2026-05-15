@@ -40,12 +40,14 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private lateinit var seekBarThreshold: SeekBar
     private lateinit var tvThresholdLabel: TextView
     private lateinit var tvSilenceCounter: TextView
+    private lateinit var tvRemainingCounter: TextView
     private lateinit var tvRustlingCounter: TextView
     private lateinit var audioFragmentsAdapter: AudioFragmentsAdapter
     private lateinit var samplesDir: File
 
     private var recordingState: RecordingState = RecordingState.IDLE
     private var silenceFilesCount = 0
+    private var remainingFilesCount = 0
     private var rustlingFilesCount = 0
 
     private var mediaPlayer: MediaPlayer? = null
@@ -132,6 +134,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         seekBarThreshold = view.findViewById(R.id.seekBarThreshold)
         tvThresholdLabel = view.findViewById(R.id.tvThresholdLabel)
         tvSilenceCounter = view.findViewById(R.id.tvSilenceCounter)
+        tvRemainingCounter = view.findViewById(R.id.tvRemainingCounter)
         tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
         samplesDir = File(requireContext().filesDir, "samples")
 
@@ -275,6 +278,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             .orEmpty()
 
         audioFragmentsAdapter.submitFiles(files)
+        remainingFilesCount = files.size
+        updateSampleCounters()
     }
 
     private fun playAudioFragment(file: File) {
@@ -307,7 +312,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             if (recordingState == RecordingState.RECORDING) {
                 DataCollectionRecordingService.adjustRemovedRustling(requireContext())
             } else {
-                rustlingFilesCount = (rustlingFilesCount - 1).coerceAtLeast(0)
+                silenceFilesCount++
                 updateSampleCounters()
             }
         }
@@ -357,12 +362,14 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun resetSampleCounters() {
         silenceFilesCount = 0
+        remainingFilesCount = 0
         rustlingFilesCount = 0
         updateSampleCounters()
     }
 
     private fun updateSampleCounters() {
         tvSilenceCounter.text = getString(R.string.silenceCounter, silenceFilesCount)
+        tvRemainingCounter.text = getString(R.string.remainingCounter, remainingFilesCount)
         tvRustlingCounter.text = getString(R.string.rustlingCounter, rustlingFilesCount)
     }
 
@@ -409,11 +416,16 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun approveAudioFragment(file: File) {
         stopPlayback()
+        var approved = false
         if (file.exists()) {
             val approvedFile = File(file.parentFile, file.name.replace("_unchecked.wav", ".wav"))
             if (!approvedFile.exists()) {
-                file.renameTo(approvedFile)
+                approved = file.renameTo(approvedFile)
             }
+        }
+        if (approved && recordingState != RecordingState.RECORDING) {
+            rustlingFilesCount++
+            updateSampleCounters()
         }
         refreshAudioFragmentsList()
         Toast.makeText(

@@ -13,8 +13,10 @@
     <string name="volumeThreshold">Порог срабатывания</string>
     <string name="volumeThresholdValue">Порог срабатывания: %1$d</string>
     <string name="silenceCounterInitial">тишина: 0</string>
+    <string name="remainingCounterInitial">осталось: 0</string>
     <string name="rustlingCounterInitial">ёрзает: 0</string>
     <string name="silenceCounter">тишина: %1$d</string>
+    <string name="remainingCounter">осталось: %1$d</string>
     <string name="rustlingCounter">ёрзает: %1$d</string>
     <string name="thresholdLabel">Порог: %1$d</string>
     <string name="startRecording">Начать запись</string>
