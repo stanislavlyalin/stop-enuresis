@@ -16,11 +16,25 @@
         android:text="@string/usageHello"
         android:textAlignment="center"
         android:textAppearance="?attr/textAppearanceTitleLarge"
-        app:layout_constraintBottom_toTopOf="@id/tvNextAlarmAllowed"
+        app:layout_constraintBottom_toTopOf="@id/layoutRustlingDetections"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed" />
+
+    <LinearLayout
+        android:id="@+id/layoutRustlingDetections"
+        android:layout_width="wrap_content"
+        android:layout_height="64dp"
+        android:layout_marginTop="28dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/tvNextAlarmAllowed"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tvUsageStatusCircle"
+        tools:visibility="visible" />
 
     <TextView
         android:id="@+id/tvNextAlarmAllowed"
@@ -33,7 +47,7 @@
         app:layout_constraintBottom_toTopOf="@id/layoutUsageActions"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvUsageStatusCircle"
+        app:layout_constraintTop_toBottomOf="@id/layoutRustlingDetections"
         tools:text="Следующее срабатывание не ранее 07:30"
         tools:visibility="visible" />
 

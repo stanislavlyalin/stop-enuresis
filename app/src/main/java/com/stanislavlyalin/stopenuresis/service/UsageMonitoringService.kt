@@ -48,9 +48,21 @@ class UsageMonitoringService : Service() {
     private var listeningThread: Thread? = null
     private var toneGenerator: ToneGenerator? = null
     private var wakeLock: PowerManager.WakeLock? = null
+    private val rustlingDetectionTimes = ArrayDeque<Long>()
+    private var requiredRustlingDetectionsPerMinute =
+        AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
     @Volatile
     private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
+
+    private val detectionStatusTick = object : Runnable {
+        override fun run() {
+            if (usageState != STATE_MONITORING) return
+            pruneRustlingDetections(SystemClock.elapsedRealtime())
+            broadcastStatus()
+            mainHandler.postDelayed(this, DETECTION_STATUS_UPDATE_MS)
+        }
+    }
 
     private val alarmTick = object : Runnable {
         override fun run() {
@@ -140,14 +152,17 @@ class UsageMonitoringService : Service() {
         )
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
         val requiredExceedancePercent = AppSettings.getRustlingThresholdExceedancePercent(this)
-        val requiredRustlingDetectionsPerMinute =
+        requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
 
         audioRecord = record
         isListening.set(true)
         usageState = STATE_MONITORING
+        clearRustlingDetections()
         broadcastStatus()
         updateNotification()
+        mainHandler.removeCallbacks(detectionStatusTick)
+        mainHandler.postDelayed(detectionStatusTick, DETECTION_STATUS_UPDATE_MS)
         smoother.reset()
 
         record.startRecording()
@@ -159,7 +174,6 @@ class UsageMonitoringService : Service() {
             var fragmentBufferSize = 0
             var aboveThresholdSamples = 0
             var alarmTriggerPosted = false
-            val rustlingDetectionTimes = ArrayDeque<Long>()
 
             while (isListening.get()) {
                 val readCount = record.read(buffer, 0, buffer.size)
@@ -188,8 +202,9 @@ class UsageMonitoringService : Service() {
                             isRustling(model, fragment)
                         ) {
                             val now = SystemClock.elapsedRealtime()
-                            addRustlingDetection(rustlingDetectionTimes, now)
-                            if (rustlingDetectionTimes.size < requiredRustlingDetectionsPerMinute) {
+                            addRustlingDetection(now)
+                            broadcastStatus()
+                            if (getRustlingDetectionCount() < requiredRustlingDetectionsPerMinute) {
                                 continue
                             }
                             alarmTriggerPosted = true
@@ -220,11 +235,13 @@ class UsageMonitoringService : Service() {
         audioRecord = null
         listeningThread?.join(300)
         listeningThread = null
+        mainHandler.removeCallbacks(detectionStatusTick)
 
         if (usageState == STATE_MONITORING) {
             cooldownUntilWallClockMillis = 0L
             usageState = STATE_IDLE
         }
+        clearRustlingDetections()
         broadcastStatus()
         updateNotification()
 
@@ -269,10 +286,17 @@ class UsageMonitoringService : Service() {
     private fun broadcastStatus() {
         stateSnapshot = usageState
         cooldownUntilWallClockSnapshot = cooldownUntilWallClockMillis
+        rustlingDetectionCountSnapshot = getRustlingDetectionCount()
+        requiredRustlingDetectionsPerMinuteSnapshot = requiredRustlingDetectionsPerMinute
         sendBroadcast(Intent(ACTION_STATUS).apply {
             setPackage(packageName)
             putExtra(EXTRA_STATE, usageState)
             putExtra(EXTRA_COOLDOWN_UNTIL_WALL_CLOCK, cooldownUntilWallClockMillis)
+            putExtra(EXTRA_RUSTLING_DETECTION_COUNT, rustlingDetectionCountSnapshot)
+            putExtra(
+                EXTRA_REQUIRED_RUSTLING_DETECTIONS_PER_MINUTE,
+                requiredRustlingDetectionsPerMinute
+            )
         })
     }
 
@@ -364,11 +388,32 @@ class UsageMonitoringService : Service() {
         return model.predictProbability(features) >= CLASSIFICATION_THRESHOLD
     }
 
-    private fun addRustlingDetection(detectionTimes: ArrayDeque<Long>, nowElapsedRealtime: Long) {
-        detectionTimes.addLast(nowElapsedRealtime)
+    private fun addRustlingDetection(nowElapsedRealtime: Long) {
+        synchronized(rustlingDetectionTimes) {
+            rustlingDetectionTimes.addLast(nowElapsedRealtime)
+        }
+        pruneRustlingDetections(nowElapsedRealtime)
+    }
+
+    private fun pruneRustlingDetections(nowElapsedRealtime: Long) {
         val oldestAllowed = nowElapsedRealtime - MINUTE_MS
-        while (detectionTimes.isNotEmpty() && detectionTimes.peekFirst() < oldestAllowed) {
-            detectionTimes.removeFirst()
+        synchronized(rustlingDetectionTimes) {
+            while (rustlingDetectionTimes.peekFirst()?.let { it < oldestAllowed } == true) {
+                rustlingDetectionTimes.removeFirst()
+            }
+        }
+    }
+
+    private fun getRustlingDetectionCount(): Int {
+        pruneRustlingDetections(SystemClock.elapsedRealtime())
+        return synchronized(rustlingDetectionTimes) {
+            rustlingDetectionTimes.size
+        }
+    }
+
+    private fun clearRustlingDetections() {
+        synchronized(rustlingDetectionTimes) {
+            rustlingDetectionTimes.clear()
         }
     }
 
@@ -386,6 +431,9 @@ class UsageMonitoringService : Service() {
         const val ACTION_STATUS = "com.stanislavlyalin.stopenuresis.USAGE_STATUS"
         const val EXTRA_STATE = "state"
         const val EXTRA_COOLDOWN_UNTIL_WALL_CLOCK = "cooldownUntilWallClock"
+        const val EXTRA_RUSTLING_DETECTION_COUNT = "rustlingDetectionCount"
+        const val EXTRA_REQUIRED_RUSTLING_DETECTIONS_PER_MINUTE =
+            "requiredRustlingDetectionsPerMinute"
         const val STATE_IDLE = "idle"
         const val STATE_MONITORING = "monitoring"
         const val STATE_ALARMING = "alarming"
@@ -395,6 +443,13 @@ class UsageMonitoringService : Service() {
             private set
         @Volatile
         var cooldownUntilWallClockSnapshot = 0L
+            private set
+        @Volatile
+        var rustlingDetectionCountSnapshot = 0
+            private set
+        @Volatile
+        var requiredRustlingDetectionsPerMinuteSnapshot =
+            AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
             private set
 
         private const val ACTION_START = "com.stanislavlyalin.stopenuresis.action.START_USAGE_MONITORING"
@@ -415,6 +470,7 @@ class UsageMonitoringService : Service() {
         private const val ALARM_VOLUME_PERCENT = 100
         private const val ALARM_TONE_MS = 450
         private const val ALARM_REPEAT_MS = 1000L
+        private const val DETECTION_STATUS_UPDATE_MS = 1000L
         private const val MINUTE_MS = 60L * 1000L
         private const val HOUR_MS = 60L * 60L * 1000L
 

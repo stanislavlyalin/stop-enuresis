@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.AudioManager
@@ -43,6 +45,7 @@ import kotlin.concurrent.thread
 class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private lateinit var tvUsageStatusCircle: TextView
+    private lateinit var layoutRustlingDetections: LinearLayout
     private lateinit var tvNextAlarmAllowed: TextView
     private lateinit var btnUsageMain: Button
     private lateinit var layoutUsageFeedback: LinearLayout
@@ -60,6 +63,10 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     @Volatile
     private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
+    private var rustlingDetectionCount = 0
+    private var requiredRustlingDetectionsPerMinute =
+        AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
+    private var displayedRustlingDetectionSlots = 0
 
     private val usageStatusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -68,7 +75,16 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
                 UsageMonitoringService.EXTRA_COOLDOWN_UNTIL_WALL_CLOCK,
                 0L
             )
+            rustlingDetectionCount = intent.getIntExtra(
+                UsageMonitoringService.EXTRA_RUSTLING_DETECTION_COUNT,
+                0
+            )
+            requiredRustlingDetectionsPerMinute = intent.getIntExtra(
+                UsageMonitoringService.EXTRA_REQUIRED_RUSTLING_DETECTIONS_PER_MINUTE,
+                AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
+            )
             setUsageState(stateFromService(intent.getStringExtra(UsageMonitoringService.EXTRA_STATE)))
+            updateRustlingDetectionIndicator()
             if (cooldownUntilWallClockMillis > 0L) {
                 showCooldownMessage()
             } else {
@@ -102,6 +118,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         super.onViewCreated(view, savedInstanceState)
 
         tvUsageStatusCircle = view.findViewById(R.id.tvUsageStatusCircle)
+        layoutRustlingDetections = view.findViewById(R.id.layoutRustlingDetections)
         tvNextAlarmAllowed = view.findViewById(R.id.tvNextAlarmAllowed)
         btnUsageMain = view.findViewById(R.id.btnUsageMain)
         layoutUsageFeedback = view.findViewById(R.id.layoutUsageFeedback)
@@ -120,6 +137,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         btnSuccess.setOnClickListener { continueMonitoring(useCooldown = true) }
 
         setUsageState(UsageState.IDLE)
+        updateRustlingDetectionIndicator()
     }
 
     override fun onStart() {
@@ -172,6 +190,10 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
 
         setUsageState(UsageState.MONITORING)
+        rustlingDetectionCount = 0
+        requiredRustlingDetectionsPerMinute =
+            AppSettings.getAlarmRustlingDetectionsPerMinute(requireContext())
+        updateRustlingDetectionIndicator()
         UsageMonitoringService.start(requireContext())
     }
 
@@ -222,6 +244,50 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
         btnUsageMain.visibility = if (state == UsageState.POST_ALARM) View.GONE else View.VISIBLE
         layoutUsageFeedback.visibility = if (state == UsageState.POST_ALARM) View.VISIBLE else View.GONE
+        layoutRustlingDetections.visibility =
+            if (state == UsageState.MONITORING) View.VISIBLE else View.GONE
+    }
+
+    private fun updateRustlingDetectionIndicator() {
+        if (!::layoutRustlingDetections.isInitialized) return
+
+        val requiredCount = requiredRustlingDetectionsPerMinute.coerceAtLeast(1)
+        val activeCount = rustlingDetectionCount.coerceIn(0, requiredCount)
+        if (displayedRustlingDetectionSlots != requiredCount) {
+            rebuildRustlingDetectionIndicator(requiredCount)
+        }
+
+        for (index in 0 until layoutRustlingDetections.childCount) {
+            val color = if (index < activeCount) {
+                ContextCompat.getColor(requireContext(), R.color.brand_orange)
+            } else {
+                Color.rgb(190, 190, 190)
+            }
+            layoutRustlingDetections.getChildAt(index).background =
+                GradientDrawable().apply {
+                    shape = GradientDrawable.RECTANGLE
+                    setColor(color)
+                }
+        }
+    }
+
+    private fun rebuildRustlingDetectionIndicator(requiredCount: Int) {
+        layoutRustlingDetections.removeAllViews()
+        displayedRustlingDetectionSlots = requiredCount
+
+        repeat(requiredCount) {
+            layoutRustlingDetections.addView(
+                View(requireContext()),
+                LinearLayout.LayoutParams(dp(44), dp(64)).apply {
+                    marginStart = dp(4)
+                    marginEnd = dp(4)
+                }
+            )
+        }
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 
     private fun showCooldownMessage() {
@@ -262,7 +328,11 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private fun syncUsageStateFromService() {
         cooldownUntilWallClockMillis = UsageMonitoringService.cooldownUntilWallClockSnapshot
+        rustlingDetectionCount = UsageMonitoringService.rustlingDetectionCountSnapshot
+        requiredRustlingDetectionsPerMinute =
+            UsageMonitoringService.requiredRustlingDetectionsPerMinuteSnapshot
         setUsageState(stateFromService(UsageMonitoringService.stateSnapshot))
+        updateRustlingDetectionIndicator()
         if (cooldownUntilWallClockMillis > 0L) {
             showCooldownMessage()
         } else {
