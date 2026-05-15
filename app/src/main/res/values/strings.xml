@@ -57,9 +57,11 @@
     <string name="clearTrainingDataset">Очистить выборку</string>
     <string name="clearTrainingDatasetDialogMessage">Все файлы обучающей выборки будут удалены. Вы уверены?</string>
     <string name="confirm">Да</string>
+    <string name="no">Нет</string>
     <string name="cancel">Отмена</string>
     <string name="notEnoughTrainingSamples">Недостаточно примеров для обучения</string>
     <string name="trainingFailed">Не удалось обучить модель</string>
+    <string name="replaceWorseModelDialogMessage">Точность новой модели (%1$d%%) ниже, чем у существующей (%2$d%%). Заменить существующую модель?</string>
     <string name="usageHello">Привет!</string>
     <string name="usageSleeping">Z-z-z...</string>
     <string name="usageGoToToilet">Кажется, пора\nв туалет</string>

@@ -12,6 +12,7 @@ import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.training.TrainingDatasetStats
 import com.stanislavlyalin.stopenuresis.training.TrainingRepository
+import com.stanislavlyalin.stopenuresis.training.TrainingResult
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
@@ -97,6 +98,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         }
 
         val balanceDataset = checkBoxBalanceDataset.isChecked
+        val existingAccuracy = trainingRepository.readModelAccuracy()
         isTraining = true
         refreshUi()
 
@@ -111,8 +113,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
                 isTraining = false
                 result
                     .onSuccess {
-                        lastAccuracy = it.accuracy
-                        refreshUi()
+                        handleTrainingSuccess(it, existingAccuracy)
                     }
                     .onFailure {
                         refreshUi()
@@ -123,6 +124,51 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
                         ).show()
                     }
             }
+        }
+    }
+
+    private fun handleTrainingSuccess(
+        result: TrainingResult,
+        existingAccuracy: Double?
+    ) {
+        if (existingAccuracy != null && result.accuracy < existingAccuracy) {
+            showReplaceWorseModelDialog(result, existingAccuracy)
+            return
+        }
+
+        saveTrainingResult(result)
+    }
+
+    private fun showReplaceWorseModelDialog(
+        result: TrainingResult,
+        existingAccuracy: Double
+    ) {
+        AlertDialog.Builder(requireContext())
+            .setMessage(
+                getString(
+                    R.string.replaceWorseModelDialogMessage,
+                    (result.accuracy * 100.0).roundToInt(),
+                    (existingAccuracy * 100.0).roundToInt()
+                )
+            )
+            .setPositiveButton(R.string.confirm) { _, _ -> saveTrainingResult(result) }
+            .setNegativeButton(R.string.no) { _, _ -> refreshUi() }
+            .show()
+    }
+
+    private fun saveTrainingResult(result: TrainingResult) {
+        runCatching {
+            trainingRepository.saveModel(result)
+        }.onSuccess {
+            lastAccuracy = result.accuracy
+            refreshUi()
+        }.onFailure {
+            refreshUi()
+            Toast.makeText(
+                requireContext(),
+                getString(R.string.trainingFailed),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 

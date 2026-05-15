@@ -9,7 +9,7 @@ data class TrainingDatasetStats(
 )
 
 data class TrainingResult(
-    val modelFile: File,
+    val modelJson: String,
     val accuracy: Double
 )
 
@@ -77,9 +77,15 @@ class TrainingRepository(
             testLabels = testLabels
         )
 
+        return TrainingResult(
+            modelJson = model.toJson().toString(2),
+            accuracy = model.accuracy
+        )
+    }
+
+    fun saveModel(result: TrainingResult) {
         modelFile.parentFile?.mkdirs()
-        modelFile.writeText(model.toJson().toString(2))
-        return TrainingResult(modelFile, model.accuracy)
+        modelFile.writeText(result.modelJson)
     }
 
     fun clearDataset() {
