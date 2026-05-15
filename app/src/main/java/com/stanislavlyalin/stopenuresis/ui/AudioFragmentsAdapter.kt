@@ -7,6 +7,8 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.stanislavlyalin.stopenuresis.R
+import com.stanislavlyalin.stopenuresis.audio.AudioFragmentAnalyzer
+import com.stanislavlyalin.stopenuresis.audio.AudioFragmentInfo
 import java.io.File
 import java.text.ParseException
 import java.text.SimpleDateFormat
@@ -14,18 +16,32 @@ import java.util.Locale
 
 class AudioFragmentsAdapter(
     private val onPlay: (File) -> Unit,
+    private val onStop: () -> Unit,
     private val onRemove: (File) -> Unit,
     private val onApprove: (File) -> Unit
 ) : RecyclerView.Adapter<AudioFragmentsAdapter.ViewHolder>() {
 
     private val files = mutableListOf<File>()
+    private val audioInfoCache = mutableMapOf<String, CachedAudioInfo>()
     private val sourceDateFormat = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss", Locale.getDefault())
     private val displayDateFormat = SimpleDateFormat("HH:mm:ss dd.MM.yyyy", Locale.getDefault())
+    private var playingFilePath: String? = null
+    private var playbackProgress: Float = 0f
 
     fun submitFiles(newFiles: List<File>) {
         files.clear()
         files.addAll(newFiles)
         notifyDataSetChanged()
+    }
+
+    fun setPlayback(file: File?, progress: Float) {
+        val previousPath = playingFilePath
+        val nextPath = file?.absolutePath
+        playingFilePath = nextPath
+        playbackProgress = progress.coerceIn(0f, 1f)
+
+        notifyFileChanged(previousPath)
+        if (nextPath != previousPath) notifyFileChanged(nextPath)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -42,16 +58,56 @@ class AudioFragmentsAdapter(
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val tvFileName: TextView = itemView.findViewById(R.id.tvAudioFragmentFileName)
+        private val tvAverageAmplitude: TextView =
+            itemView.findViewById(R.id.tvAudioFragmentAverageAmplitude)
+        private val waveformView: WaveformView = itemView.findViewById(R.id.waveformAudioFragment)
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
         private val btnAccept: ImageButton = itemView.findViewById(R.id.btnAccept)
 
         fun bind(file: File) {
+            val isPlaying = file.absolutePath == playingFilePath
+            val audioInfo = getAudioInfo(file)
+
             tvFileName.text = formatDisplayName(file)
-            btnPlay.setOnClickListener { onPlay(file) }
+            tvAverageAmplitude.text = audioInfo.averageAmplitude.toString()
+            waveformView.setWaveform(audioInfo.waveform)
+            waveformView.setProgress(if (isPlaying) playbackProgress else 0f)
+
+            btnPlay.setImageResource(
+                if (isPlaying) R.drawable.ic_stop_24 else android.R.drawable.ic_media_play
+            )
+            btnPlay.contentDescription = itemView.context.getString(
+                if (isPlaying) R.string.stopAudioFragment else R.string.playAudioFragment
+            )
+            btnPlay.setOnClickListener {
+                if (isPlaying) {
+                    onStop()
+                } else {
+                    onPlay(file)
+                }
+            }
             btnDelete.setOnClickListener { onRemove(file) }
             btnAccept.setOnClickListener { onApprove(file) }
         }
+    }
+
+    private fun getAudioInfo(file: File): AudioFragmentInfo {
+        val cached = audioInfoCache[file.absolutePath]
+        if (cached != null && cached.lastModified == file.lastModified()) {
+            return cached.info
+        }
+
+        val info = runCatching { AudioFragmentAnalyzer.analyze(file) }
+            .getOrDefault(AudioFragmentInfo(FloatArray(0), 0))
+        audioInfoCache[file.absolutePath] = CachedAudioInfo(file.lastModified(), info)
+        return info
+    }
+
+    private fun notifyFileChanged(path: String?) {
+        if (path == null) return
+        val index = files.indexOfFirst { it.absolutePath == path }
+        if (index >= 0) notifyItemChanged(index)
     }
 
     private fun formatDisplayName(file: File): String {
@@ -67,4 +123,9 @@ class AudioFragmentsAdapter(
             timestamp
         }
     }
+
+    private data class CachedAudioInfo(
+        val lastModified: Long,
+        val info: AudioFragmentInfo
+    )
 }

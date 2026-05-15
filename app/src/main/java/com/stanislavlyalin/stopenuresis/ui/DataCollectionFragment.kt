@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
@@ -47,6 +49,23 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private var rustlingFilesCount = 0
 
     private var mediaPlayer: MediaPlayer? = null
+    private var playingFile: File? = null
+    private val playbackProgressHandler = Handler(Looper.getMainLooper())
+    private val playbackProgressRunnable = object : Runnable {
+        override fun run() {
+            val player = mediaPlayer ?: return
+            val file = playingFile ?: return
+            val duration = runCatching { player.duration }.getOrDefault(0)
+            val position = runCatching { player.currentPosition }.getOrDefault(0)
+            val progress = if (duration > 0) {
+                position.toFloat() / duration.toFloat()
+            } else {
+                0f
+            }
+            audioFragmentsAdapter.setPlayback(file, progress)
+            playbackProgressHandler.postDelayed(this, PLAYBACK_PROGRESS_UPDATE_MS)
+        }
+    }
 
     private val chartEntries = mutableListOf<Entry>()
     private var chartX = 0f
@@ -86,6 +105,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private companion object {
         const val CHART_AXIS_MAX = 200f
         const val THRESHOLD_MAX = 200
+        const val PLAYBACK_PROGRESS_UPDATE_MS = 50L
 
     }
 
@@ -237,6 +257,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private fun setupAudioFragmentsList() {
         audioFragmentsAdapter = AudioFragmentsAdapter(
             onPlay = { file -> playAudioFragment(file) },
+            onStop = { stopPlayback() },
             onRemove = { file -> removeAudioFragment(file) },
             onApprove = { file -> approveAudioFragment(file) }
         )
@@ -263,6 +284,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         }
 
         stopPlayback()
+        playingFile = file
+        audioFragmentsAdapter.setPlayback(file, 0f)
         mediaPlayer = MediaPlayer().apply {
             setDataSource(file.absolutePath)
             setOnCompletionListener { stopPlayback() }
@@ -273,6 +296,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             prepare()
             start()
         }
+        playbackProgressHandler.post(playbackProgressRunnable)
     }
 
     private fun removeAudioFragment(file: File) {
@@ -400,6 +424,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun stopPlayback() {
+        playbackProgressHandler.removeCallbacks(playbackProgressRunnable)
         mediaPlayer?.run {
             try {
                 if (isPlaying) stop()
@@ -408,6 +433,10 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             release()
         }
         mediaPlayer = null
+        playingFile = null
+        if (::audioFragmentsAdapter.isInitialized) {
+            audioFragmentsAdapter.setPlayback(null, 0f)
+        }
     }
 
     private fun resetChart() {

@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="52dp"
     android:layout_marginBottom="4dp"
     android:paddingHorizontal="4dp">
 
@@ -14,9 +14,9 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/playAudioFragment"
         android:src="@android:drawable/ic_media_play"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/btnDelete"
@@ -25,9 +25,9 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/deleteAudioFragment"
         android:src="@android:drawable/ic_menu_delete"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnAccept" />
+        app:layout_constraintEnd_toStartOf="@id/btnAccept"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <ImageButton
         android:id="@+id/btnAccept"
@@ -36,9 +36,20 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/acceptAudioFragment"
         android:src="@android:drawable/ic_menu_save"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvAudioFragmentAverageAmplitude"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:textColor="#009000"
+        android:textSize="18sp"
+        app:layout_constraintBaseline_toBaselineOf="@id/tvAudioFragmentFileName"
+        app:layout_constraintEnd_toStartOf="@id/btnDelete"
+        tools:text="65" />
 
     <TextView
         android:id="@+id/tvAudioFragmentFileName"
@@ -49,10 +60,22 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="?attr/textAppearanceBodyMedium"
+        android:textColor="@color/black"
+        android:textSize="20sp"
         app:layout_constraintStart_toEndOf="@id/btnPlay"
-        app:layout_constraintEnd_toStartOf="@id/btnDelete"
+        app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         tools:text="23:10:42 08.05.2026" />
+
+    <com.stanislavlyalin.stopenuresis.ui.WaveformView
+        android:id="@+id/waveformAudioFragment"
+        android:layout_width="0dp"
+        android:layout_height="12dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
+        app:layout_constraintStart_toEndOf="@id/btnPlay"
+        app:layout_constraintTop_toBottomOf="@id/tvAudioFragmentFileName"
+        tools:background="#eeeeee" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

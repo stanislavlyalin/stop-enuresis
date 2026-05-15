@@ -20,6 +20,7 @@
     <string name="startRecording">Начать запись</string>
     <string name="stopRecording">Остановить запись</string>
     <string name="playAudioFragment">Воспроизвести фрагмент</string>
+    <string name="stopAudioFragment">Остановить воспроизведение</string>
     <string name="deleteAudioFragment">Удалить фрагмент</string>
     <string name="acceptAudioFragment">Принять и сохранить фрагмент</string>
     <string name="selectionBegin">Начало выделения</string>
