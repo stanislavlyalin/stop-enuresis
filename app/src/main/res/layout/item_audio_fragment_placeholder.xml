@@ -46,7 +46,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="8dp"
         android:textColor="#009000"
-        android:textSize="18sp"
+        android:textSize="15sp"
         app:layout_constraintBaseline_toBaselineOf="@id/tvAudioFragmentFileName"
         app:layout_constraintEnd_toStartOf="@id/btnDelete"
         tools:text="65" />
@@ -61,7 +61,7 @@
         android:maxLines="1"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="@color/black"
-        android:textSize="20sp"
+        android:textSize="15sp"
         app:layout_constraintStart_toEndOf="@id/btnPlay"
         app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
         app:layout_constraintTop_toTopOf="parent"
