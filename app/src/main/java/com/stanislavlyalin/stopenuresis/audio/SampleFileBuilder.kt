@@ -17,11 +17,10 @@ class SampleFileBuilder(
 ) {
 
     private var threshold: Float = 0f
-    private var thresholdExceedancePercent: Int = 70
 
     private val fragmentBuffer = ShortArray(fragmentSizeSamples)
     private var fragmentBufferSize = 0
-    private var aboveThresholdSamples = 0
+    private var envelopeSum = 0f
     private var negativeFragmentCounter = 0
 
     init {
@@ -36,13 +35,9 @@ class SampleFileBuilder(
         this.threshold = threshold
     }
 
-    fun setThresholdExceedancePercent(percent: Int) {
-        thresholdExceedancePercent = percent.coerceIn(0, 100)
-    }
-
     fun reset() {
         fragmentBufferSize = 0
-        aboveThresholdSamples = 0
+        envelopeSum = 0f
         negativeFragmentCounter = 0
     }
 
@@ -61,20 +56,20 @@ class SampleFileBuilder(
 
         for (i in 0 until readCount) {
             fragmentBuffer[fragmentBufferSize] = pcm16MonoSamples[i]
-            if (envelopeSamples[i] >= threshold) aboveThresholdSamples++
+            envelopeSum += envelopeSamples[i]
             fragmentBufferSize++
 
             if (fragmentBufferSize == fragmentSizeSamples) {
                 handleCompletedFragment()
                 fragmentBufferSize = 0
-                aboveThresholdSamples = 0
+                envelopeSum = 0f
             }
         }
     }
 
     private fun handleCompletedFragment() {
-        val exceedancePercent = aboveThresholdSamples * 100f / fragmentSizeSamples.toFloat()
-        val hasRustling = exceedancePercent >= thresholdExceedancePercent.toFloat()
+        val averageEnvelope = envelopeSum / fragmentSizeSamples.toFloat()
+        val hasRustling = averageEnvelope >= threshold
 
         if (hasRustling) {
             dispatchWrite(

@@ -114,9 +114,6 @@ class DataCollectionRecordingService : Service() {
             onSampleFileWritten = { file -> onSampleFileWritten(file) }
         )
         sampleFileBuilder.setThreshold(threshold)
-        sampleFileBuilder.setThresholdExceedancePercent(
-            AppSettings.getRustlingThresholdExceedancePercent(this)
-        )
 
         val smoother = StreamingMovingAverageSmoother(
             windowSeconds = 1f,

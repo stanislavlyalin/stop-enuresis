@@ -349,14 +349,6 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
     }
 
-    private fun isThresholdExceeded(
-        aboveThresholdSamples: Int,
-        requiredPercent: Int
-    ): Boolean {
-        val exceedancePercent = aboveThresholdSamples * 100f / FRAGMENT_SIZE_SAMPLES.toFloat()
-        return exceedancePercent >= requiredPercent.toFloat()
-    }
-
     private fun canTriggerAlarm(): Boolean {
         return SystemClock.elapsedRealtime() >= cooldownUntilElapsedRealtime
     }

@@ -151,7 +151,6 @@ class UsageMonitoringService : Service() {
             sampleRate = SAMPLE_RATE
         )
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
-        val requiredExceedancePercent = AppSettings.getRustlingThresholdExceedancePercent(this)
         requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
 
@@ -172,7 +171,7 @@ class UsageMonitoringService : Service() {
             val smoothedBuffer = FloatArray(buffer.size)
             val fragmentBuffer = ShortArray(FRAGMENT_SIZE_SAMPLES)
             var fragmentBufferSize = 0
-            var aboveThresholdSamples = 0
+            var envelopeSum = 0f
             var alarmTriggerPosted = false
 
             while (isListening.get()) {
@@ -183,17 +182,15 @@ class UsageMonitoringService : Service() {
 
                 for (i in 0 until readCount) {
                     fragmentBuffer[fragmentBufferSize] = buffer[i]
-                    if (smoothedBuffer[i] >= volumeThreshold) aboveThresholdSamples++
+                    envelopeSum += smoothedBuffer[i]
                     fragmentBufferSize++
 
                     if (fragmentBufferSize == FRAGMENT_SIZE_SAMPLES) {
-                        val shouldClassify = isThresholdExceeded(
-                            aboveThresholdSamples,
-                            requiredExceedancePercent
-                        )
+                        val shouldClassify =
+                            envelopeSum / FRAGMENT_SIZE_SAMPLES.toFloat() >= volumeThreshold
                         val fragment = fragmentBuffer.copyOf()
                         fragmentBufferSize = 0
-                        aboveThresholdSamples = 0
+                        envelopeSum = 0f
 
                         if (
                             !alarmTriggerPosted &&
@@ -364,11 +361,6 @@ class UsageMonitoringService : Service() {
     private fun releaseWakeLock() {
         wakeLock?.takeIf { it.isHeld }?.release()
         wakeLock = null
-    }
-
-    private fun isThresholdExceeded(aboveThresholdSamples: Int, requiredPercent: Int): Boolean {
-        val exceedancePercent = aboveThresholdSamples * 100f / FRAGMENT_SIZE_SAMPLES.toFloat()
-        return exceedancePercent >= requiredPercent.toFloat()
     }
 
     private fun canTriggerAlarm(): Boolean {

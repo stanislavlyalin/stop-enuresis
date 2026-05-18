@@ -25,8 +25,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var seekBarCooldown: SeekBar
     private lateinit var tvCooldownValue: TextView
     private lateinit var switchDarkTheme: Switch
-    private lateinit var seekBarRustlingThresholdExceedance: SeekBar
-    private lateinit var tvRustlingThresholdExceedanceValue: TextView
     private lateinit var seekBarAlarmRustlingDetectionsPerMinute: SeekBar
     private lateinit var tvAlarmRustlingDetectionsPerMinuteValue: TextView
     private lateinit var tvAppVersion: TextView
@@ -45,10 +43,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         seekBarCooldown = view.findViewById(R.id.seekBarCooldown)
         tvCooldownValue = view.findViewById(R.id.tvCooldownValue)
         switchDarkTheme = view.findViewById(R.id.switchDarkTheme)
-        seekBarRustlingThresholdExceedance =
-            view.findViewById(R.id.seekBarRustlingThresholdExceedance)
-        tvRustlingThresholdExceedanceValue =
-            view.findViewById(R.id.tvRustlingThresholdExceedanceValue)
         seekBarAlarmRustlingDetectionsPerMinute =
             view.findViewById(R.id.seekBarAlarmRustlingDetectionsPerMinute)
         tvAlarmRustlingDetectionsPerMinuteValue =
@@ -59,7 +53,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         setupDarkThemeSetting()
         setupCooldownSetting()
-        setupRustlingThresholdExceedanceSetting()
         setupAlarmRustlingDetectionsPerMinuteSetting()
         setupModelTransferButtons()
         tvAppVersion.text = getString(R.string.appVersion, BuildConfig.GIT_COMMIT)
@@ -102,40 +95,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
             }
         )
-    }
-
-    private fun setupRustlingThresholdExceedanceSetting() {
-        seekBarRustlingThresholdExceedance.max = 100
-        seekBarRustlingThresholdExceedance.progress =
-            AppSettings.getRustlingThresholdExceedancePercent(requireContext())
-        updateRustlingThresholdExceedanceValue(seekBarRustlingThresholdExceedance.progress)
-
-        seekBarRustlingThresholdExceedance.setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    updateRustlingThresholdExceedanceValue(progress)
-                    if (fromUser) {
-                        AppSettings.setRustlingThresholdExceedancePercent(
-                            requireContext(),
-                            progress
-                        )
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-            }
-        )
-    }
-
-    private fun updateRustlingThresholdExceedanceValue(value: Int) {
-        tvRustlingThresholdExceedanceValue.text =
-            getString(R.string.percentValue, value)
     }
 
     private fun setupAlarmRustlingDetectionsPerMinuteSetting() {

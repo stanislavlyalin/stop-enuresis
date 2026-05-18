@@ -32,9 +32,6 @@
     <string name="noAccessToMicrophone">Нет доступа к микрофону</string>
     <string name="audioRecordingSettingsError">Ошибка параметров аудиозаписи</string>
     <string name="audioRecordNotInitialized">AudioRecord не инициализирован</string>
-    <string name="rustlingThresholdExceedance">Превышение порога для ёрзания</string>
-    <string name="percentValue">%1$d%%</string>
-    <string name="defaultRustlingThresholdExceedanceValue" formatted="false">70%</string>
     <string name="alarmRustlingDetectionsPerMinute">Число срабатываний детектора в минуту для активации будильника</string>
     <string name="integerValue">%1$d</string>
     <string name="exportModel">Экспорт модели</string>
