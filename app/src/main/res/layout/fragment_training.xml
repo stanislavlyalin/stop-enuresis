@@ -32,7 +32,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvTrainingStatusCircle"
-        tools:text="Выборка:\nёрзает: 20 примеров\nтишина: 100 примеров" />
+        tools:text="Выборка:\nёрзает: 20 примеров (уровень 85-107)\nтишина: 100 примеров (уровень 78-100)" />
 
     <CheckBox
         android:id="@+id/checkBoxBalanceDataset"

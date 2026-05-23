@@ -14,22 +14,26 @@ class TrainingRepositoryTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
-    fun getDatasetStatsIncludesAverageLevels() {
+    fun getDatasetStatsIncludesCentralLevelRanges() {
         val samplesDir = temporaryFolder.newFolder("samples")
         val repository = TrainingRepository(
             samplesDir = samplesDir,
             modelFile = temporaryFolder.newFile("model.json")
         )
         writeSample(samplesDir, "2026.05.23_07.00.00_1.wav", 80)
-        writeSample(samplesDir, "2026.05.23_07.00.01_1_unchecked.wav", 200)
-        writeSample(samplesDir, "2026.05.23_07.00.01_0.wav", 20)
+        writeSample(samplesDir, "2026.05.23_07.00.01_1.wav", 100)
+        writeSample(samplesDir, "2026.05.23_07.00.02_1.wav", 120)
+        writeSample(samplesDir, "2026.05.23_07.00.03_1_unchecked.wav", 200)
+        writeSample(samplesDir, "2026.05.23_07.00.04_0.wav", 10)
+        writeSample(samplesDir, "2026.05.23_07.00.05_0.wav", 20)
+        writeSample(samplesDir, "2026.05.23_07.00.06_0.wav", 30)
 
         val stats = repository.getDatasetStats()
 
-        assertEquals(1, stats.positiveCount)
-        assertEquals(1, stats.negativeCount)
-        assertEquals(80, stats.positiveAverageLevel)
-        assertEquals(20, stats.negativeAverageLevel)
+        assertEquals(3, stats.positiveCount)
+        assertEquals(3, stats.negativeCount)
+        assertEquals(82..118, stats.positiveLevelRange)
+        assertEquals(11..29, stats.negativeLevelRange)
     }
 
     @Test

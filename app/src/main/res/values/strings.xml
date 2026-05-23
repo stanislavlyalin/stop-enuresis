@@ -52,7 +52,7 @@
     <string name="trainingDatasetTitle">Выборка:</string>
     <string name="trainingDatasetPositiveLine">ёрзает: %1$d примеров</string>
     <string name="trainingDatasetNegativeLine">тишина: %1$d примеров</string>
-    <string name="trainingDatasetAverageLevel"> (уровень %1$d)</string>
+    <string name="trainingDatasetLevelRange"> (уровень %1$d-%2$d)</string>
     <string name="trainingProgressDescription">Обработано файлов: %1$d из %2$d</string>
     <string name="balanceTrainingDataset">Сбалансировать выборку</string>
     <string name="startTraining">Начать обучение</string>

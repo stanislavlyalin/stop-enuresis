@@ -2,14 +2,15 @@ package com.stanislavlyalin.stopenuresis.training
 
 import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
 import java.io.File
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
 data class TrainingDatasetStats(
     val positiveCount: Int,
     val negativeCount: Int,
-    val positiveAverageLevel: Int? = null,
-    val negativeAverageLevel: Int? = null
+    val positiveLevelRange: IntRange? = null,
+    val negativeLevelRange: IntRange? = null
 )
 
 data class TrainingProgress(
@@ -28,33 +29,25 @@ class TrainingRepository(
 ) {
     private val mfccExtractor = MfccExtractor()
     private val trainer = LogisticRegressionTrainer()
-    private val averageLevelCache = mutableMapOf<String, CachedAverageLevel>()
+    private val sampleLevelCache = mutableMapOf<String, CachedSampleLevel>()
 
     fun getDatasetStats(): TrainingDatasetStats {
         val files = listSampleFiles()
         var positiveCount = 0
         var negativeCount = 0
-        var positiveLevelSum = 0.0
-        var negativeLevelSum = 0.0
-        var positiveLevelCount = 0
-        var negativeLevelCount = 0
+        val positiveLevels = mutableListOf<Float>()
+        val negativeLevels = mutableListOf<Float>()
 
         files.forEach { file ->
             when (getStatsLabel(file)) {
                 1 -> {
                     positiveCount++
-                    readAverageLevel(file)?.let { level ->
-                        positiveLevelSum += level.toDouble()
-                        positiveLevelCount++
-                    }
+                    readSampleLevel(file)?.let { level -> positiveLevels.add(level) }
                 }
 
                 0 -> {
                     negativeCount++
-                    readAverageLevel(file)?.let { level ->
-                        negativeLevelSum += level.toDouble()
-                        negativeLevelCount++
-                    }
+                    readSampleLevel(file)?.let { level -> negativeLevels.add(level) }
                 }
             }
         }
@@ -62,8 +55,8 @@ class TrainingRepository(
         return TrainingDatasetStats(
             positiveCount = positiveCount,
             negativeCount = negativeCount,
-            positiveAverageLevel = averageLevel(positiveLevelSum, positiveLevelCount),
-            negativeAverageLevel = averageLevel(negativeLevelSum, negativeLevelCount)
+            positiveLevelRange = centralLevelRange(positiveLevels),
+            negativeLevelRange = centralLevelRange(negativeLevels)
         )
     }
 
@@ -142,7 +135,7 @@ class TrainingRepository(
 
     fun clearDataset() {
         listSampleFiles().forEach { it.delete() }
-        averageLevelCache.clear()
+        sampleLevelCache.clear()
     }
 
     private fun listSampleFiles(): List<File> {
@@ -170,27 +163,46 @@ class TrainingRepository(
         }
     }
 
-    private fun readAverageLevel(file: File): Float? {
+    private fun readSampleLevel(file: File): Float? {
         val key = file.absolutePath
-        val cached = averageLevelCache[key]
+        val cached = sampleLevelCache[key]
         if (cached != null && cached.lastModified == file.lastModified()) {
-            return cached.averageLevel
+            return cached.level
         }
 
-        val averageLevel = runCatching {
+        val level = runCatching {
             val pcm = WavReader.readPcm16MonoSamples(file)
             AudioEnvelope.averageSmoothedAbsolute(
                 input = pcm.samples,
                 sampleRate = pcm.sampleRate
             )
         }.getOrNull()
-        averageLevelCache[key] = CachedAverageLevel(file.lastModified(), averageLevel)
-        return averageLevel
+        sampleLevelCache[key] = CachedSampleLevel(file.lastModified(), level)
+        return level
     }
 
-    private fun averageLevel(sum: Double, count: Int): Int? {
-        if (count == 0) return null
-        return (sum / count.toDouble()).roundToInt()
+    private fun centralLevelRange(levels: List<Float>): IntRange? {
+        if (levels.isEmpty()) return null
+
+        val sortedLevels = levels.sorted()
+        val lowerLevel = percentile(sortedLevels, LEVEL_RANGE_LOWER_PERCENTILE).roundToInt()
+        val upperLevel = percentile(sortedLevels, LEVEL_RANGE_UPPER_PERCENTILE).roundToInt()
+        return lowerLevel..upperLevel
+    }
+
+    private fun percentile(sortedLevels: List<Float>, percentile: Double): Float {
+        val position = (sortedLevels.lastIndex * percentile)
+            .coerceIn(0.0, sortedLevels.lastIndex.toDouble())
+        val lowerIndex = position.toInt()
+        val upperIndex = ceil(position).toInt()
+        if (lowerIndex == upperIndex) return sortedLevels[lowerIndex]
+
+        val upperWeight = position - lowerIndex.toDouble()
+        val lowerWeight = 1.0 - upperWeight
+        return (
+            sortedLevels[lowerIndex].toDouble() * lowerWeight +
+                sortedLevels[upperIndex].toDouble() * upperWeight
+            ).toFloat()
     }
 
     private fun splitClassSamples(
@@ -206,10 +218,12 @@ class TrainingRepository(
     private companion object {
         const val TRAIN_SPLIT = 0.7
         const val MIN_SAMPLES_PER_CLASS = 2
+        const val LEVEL_RANGE_LOWER_PERCENTILE = 0.05
+        const val LEVEL_RANGE_UPPER_PERCENTILE = 0.95
     }
 
-    private data class CachedAverageLevel(
+    private data class CachedSampleLevel(
         val lastModified: Long,
-        val averageLevel: Float?
+        val level: Float?
     )
 }

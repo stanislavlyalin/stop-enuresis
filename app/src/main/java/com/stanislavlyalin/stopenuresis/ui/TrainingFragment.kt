@@ -213,13 +213,13 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
             append('\n')
             appendDatasetLine(
                 line = getString(R.string.trainingDatasetPositiveLine, stats.positiveCount),
-                averageLevel = stats.positiveAverageLevel,
+                levelRange = stats.positiveLevelRange,
                 levelColor = Color.RED
             )
             append('\n')
             appendDatasetLine(
                 line = getString(R.string.trainingDatasetNegativeLine, stats.negativeCount),
-                averageLevel = stats.negativeAverageLevel,
+                levelRange = stats.negativeLevelRange,
                 levelColor = Color.rgb(0, 140, 0)
             )
         }
@@ -227,14 +227,20 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
     private fun SpannableStringBuilder.appendDatasetLine(
         line: String,
-        averageLevel: Int?,
+        levelRange: IntRange?,
         levelColor: Int
     ) {
         append(line)
-        if (averageLevel == null) return
+        if (levelRange == null) return
 
         val start = length
-        append(getString(R.string.trainingDatasetAverageLevel, averageLevel))
+        append(
+            getString(
+                R.string.trainingDatasetLevelRange,
+                levelRange.first,
+                levelRange.last
+            )
+        )
         setSpan(
             ForegroundColorSpan(levelColor),
             start,
