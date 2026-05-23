@@ -25,7 +25,9 @@ import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.MainActivity
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
+import com.stanislavlyalin.stopenuresis.audio.ManualWavFileWriter
 import com.stanislavlyalin.stopenuresis.audio.RecentAudioWindow
+import com.stanislavlyalin.stopenuresis.audio.SampleFileBuilder
 import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
 import com.stanislavlyalin.stopenuresis.training.MfccExtractor
 import com.stanislavlyalin.stopenuresis.training.WavAudio
@@ -150,6 +152,18 @@ class UsageMonitoringService : Service() {
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
         requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
+        AppStorage.migrateLegacyData(this)
+        val sampleFileBuilder = SampleFileBuilder(
+            fragmentSizeSamples = FRAGMENT_SIZE_SAMPLES,
+            sampleRate = SAMPLE_RATE,
+            channelCount = CHANNEL_COUNT,
+            bitsPerSample = BITS_PER_SAMPLE,
+            samplesDir = AppStorage.samplesDir(this),
+            wavFileWriter = ManualWavFileWriter(),
+            saveSilenceSamples = false,
+            onSampleFileWritten = { onTrainingSampleFileWritten() }
+        )
+        sampleFileBuilder.setThreshold(volumeThreshold)
 
         audioRecord = record
         isListening.set(true)
@@ -172,6 +186,7 @@ class UsageMonitoringService : Service() {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
+                sampleFileBuilder.addSamples(buffer, readCount)
                 recentAudioWindow.append(buffer, readCount)
                 samplesSinceLastClassification =
                     (samplesSinceLastClassification + readCount).coerceAtMost(FRAGMENT_SIZE_SAMPLES)
@@ -206,6 +221,12 @@ class UsageMonitoringService : Service() {
                 }
             }
         }
+    }
+
+    private fun onTrainingSampleFileWritten() {
+        sendBroadcast(Intent(DataCollectionRecordingService.ACTION_SAMPLES_CHANGED).apply {
+            setPackage(packageName)
+        })
     }
 
     private fun stopListening(stopService: Boolean) {
@@ -449,6 +470,8 @@ class UsageMonitoringService : Service() {
         private const val NOTIFICATION_ID = 1002
 
         private const val SAMPLE_RATE = 16000
+        private const val CHANNEL_COUNT = 1
+        private const val BITS_PER_SAMPLE = 16
         private const val FRAGMENT_SECONDS = 5
         private const val FRAGMENT_SIZE_SAMPLES = SAMPLE_RATE * FRAGMENT_SECONDS
         private const val CLASSIFICATION_THRESHOLD = 0.5

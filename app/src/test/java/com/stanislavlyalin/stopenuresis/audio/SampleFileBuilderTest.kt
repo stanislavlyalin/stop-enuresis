@@ -67,6 +67,28 @@ class SampleFileBuilderTest {
         assertTrue(savedAverage >= 60f)
     }
 
+    @Test
+    fun addSamplesCanSkipSilenceWindows() {
+        val writer = CapturingWavFileWriter()
+        val builder = SampleFileBuilder(
+            fragmentSizeSamples = 10,
+            sampleRate = 10,
+            channelCount = 1,
+            bitsPerSample = 16,
+            samplesDir = temporaryFolder.newFolder(),
+            wavFileWriter = writer,
+            saveSilenceSamples = false
+        )
+        builder.setThreshold(40f)
+
+        repeat(120) {
+            builder.addSamples(ShortArray(10) { 0 }, 10)
+        }
+        Thread.sleep(200)
+
+        assertEquals(0, writer.writtenSamples.size)
+    }
+
     private class CapturingWavFileWriter : WavFileWriter {
 
         val writtenSamples = CopyOnWriteArrayList<ShortArray>()

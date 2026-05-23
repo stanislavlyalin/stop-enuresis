@@ -105,6 +105,13 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         }
     }
 
+    private val samplesChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DataCollectionRecordingService.ACTION_SAMPLES_CHANGED) return
+            refreshAudioFragmentsList()
+        }
+    }
+
     private companion object {
         const val CHART_AXIS_MAX = 200f
         const val CHART_AXIS_STEP = 25f
@@ -381,6 +388,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private fun registerRecordingReceivers() {
         val statusFilter = IntentFilter(DataCollectionRecordingService.ACTION_STATUS)
         val chartFilter = IntentFilter(DataCollectionRecordingService.ACTION_CHART_POINTS)
+        val samplesChangedFilter =
+            IntentFilter(DataCollectionRecordingService.ACTION_SAMPLES_CHANGED)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             requireContext().registerReceiver(
                 recordingStatusReceiver,
@@ -392,17 +401,25 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
                 chartFilter,
                 Context.RECEIVER_NOT_EXPORTED
             )
+            requireContext().registerReceiver(
+                samplesChangedReceiver,
+                samplesChangedFilter,
+                Context.RECEIVER_NOT_EXPORTED
+            )
         } else {
             @Suppress("DEPRECATION")
             requireContext().registerReceiver(recordingStatusReceiver, statusFilter)
             @Suppress("DEPRECATION")
             requireContext().registerReceiver(chartPointsReceiver, chartFilter)
+            @Suppress("DEPRECATION")
+            requireContext().registerReceiver(samplesChangedReceiver, samplesChangedFilter)
         }
     }
 
     private fun unregisterRecordingReceivers() {
         runCatching { requireContext().unregisterReceiver(recordingStatusReceiver) }
         runCatching { requireContext().unregisterReceiver(chartPointsReceiver) }
+        runCatching { requireContext().unregisterReceiver(samplesChangedReceiver) }
     }
 
     private fun syncRecordingStateFromService() {

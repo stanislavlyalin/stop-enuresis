@@ -187,6 +187,8 @@ class DataCollectionRecordingService : Service() {
     }
 
     private fun onSampleFileWritten(file: File) {
+        broadcastSamplesChanged()
+
         if (!isRecording.get()) {
             if (file.name.endsWith("_1_unchecked.wav")) broadcastStatus()
             return
@@ -217,6 +219,12 @@ class DataCollectionRecordingService : Service() {
             putExtra(EXTRA_IS_RECORDING, isRecording.get())
             putExtra(EXTRA_SILENCE_COUNT, silenceFilesCount)
             putExtra(EXTRA_RUSTLING_COUNT, rustlingFilesCount)
+        })
+    }
+
+    private fun broadcastSamplesChanged() {
+        sendBroadcast(Intent(ACTION_SAMPLES_CHANGED).apply {
+            setPackage(packageName)
         })
     }
 
@@ -271,6 +279,8 @@ class DataCollectionRecordingService : Service() {
     companion object {
         const val ACTION_STATUS = "com.stanislavlyalin.stopenuresis.DATA_COLLECTION_STATUS"
         const val ACTION_CHART_POINTS = "com.stanislavlyalin.stopenuresis.DATA_COLLECTION_CHART_POINTS"
+        const val ACTION_SAMPLES_CHANGED =
+            "com.stanislavlyalin.stopenuresis.DATA_COLLECTION_SAMPLES_CHANGED"
         const val EXTRA_IS_RECORDING = "isRecording"
         const val EXTRA_SILENCE_COUNT = "silenceCount"
         const val EXTRA_RUSTLING_COUNT = "rustlingCount"

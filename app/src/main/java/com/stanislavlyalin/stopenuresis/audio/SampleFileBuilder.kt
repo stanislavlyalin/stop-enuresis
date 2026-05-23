@@ -13,6 +13,7 @@ class SampleFileBuilder(
     private val bitsPerSample: Int,
     private val samplesDir: File,
     private val wavFileWriter: WavFileWriter,
+    private val saveSilenceSamples: Boolean = true,
     private val onSampleFileWritten: (File) -> Unit = {}
 ) {
 
@@ -82,6 +83,8 @@ class SampleFileBuilder(
             }
             return
         }
+
+        if (!saveSilenceSamples) return
 
         if (samplesSinceLastSilenceDecision >= fragmentSizeSamples) {
             negativeFragmentCounter++
