@@ -7,8 +7,13 @@ import java.nio.ByteOrder
 import kotlin.math.max
 
 data class AudioFragmentInfo(
-    val waveform: FloatArray,
+    val waveform: List<AudioWaveformColumn>,
     val averageAmplitude: Int
+)
+
+data class AudioWaveformColumn(
+    val minAmplitude: Float,
+    val maxAmplitude: Float
 )
 
 object AudioFragmentAnalyzer {
@@ -17,35 +22,36 @@ object AudioFragmentAnalyzer {
     fun analyze(file: File): AudioFragmentInfo {
         val wav = readPcm16Mono(file)
         if (wav.samples.isEmpty()) {
-            return AudioFragmentInfo(FloatArray(0), 0)
+            return AudioFragmentInfo(emptyList(), 0)
         }
 
-        val smoothed = FloatArray(wav.samples.size)
-        val averageAmplitude = AudioEnvelope.smoothAbsolute(
+        val averageAmplitude = AudioEnvelope.averageSmoothedAbsolute(
             input = wav.samples,
-            output = smoothed,
             sampleRate = wav.sampleRate
         )
 
         return AudioFragmentInfo(
-            waveform = buildWaveform(smoothed),
+            waveform = buildWaveform(wav.samples),
             averageAmplitude = averageAmplitude.toInt()
         )
     }
 
-    private fun buildWaveform(smoothed: FloatArray): FloatArray {
-        val pointsCount = minOf(TARGET_WAVEFORM_POINTS, smoothed.size)
-        if (pointsCount == 0) return FloatArray(0)
+    private fun buildWaveform(samples: ShortArray): List<AudioWaveformColumn> {
+        val pointsCount = minOf(TARGET_WAVEFORM_POINTS, samples.size)
+        if (pointsCount == 0) return emptyList()
 
-        val points = FloatArray(pointsCount)
+        val points = ArrayList<AudioWaveformColumn>(pointsCount)
         for (pointIndex in 0 until pointsCount) {
-            val start = pointIndex * smoothed.size / pointsCount
-            val end = max(start + 1, (pointIndex + 1) * smoothed.size / pointsCount)
-            var sum = 0f
+            val start = pointIndex * samples.size / pointsCount
+            val end = max(start + 1, (pointIndex + 1) * samples.size / pointsCount)
+            var minSample = 0
+            var maxSample = 0
             for (sampleIndex in start until end) {
-                sum += smoothed[sampleIndex]
+                val sample = samples[sampleIndex].toInt()
+                if (sample < minSample) minSample = sample
+                if (sample > maxSample) maxSample = sample
             }
-            points[pointIndex] = sum / (end - start).toFloat()
+            points.add(AudioWaveformColumn(minSample.toFloat(), maxSample.toFloat()))
         }
         return points
     }

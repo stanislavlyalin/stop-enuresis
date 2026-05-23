@@ -99,7 +99,7 @@ class AudioFragmentsAdapter(
         }
 
         val info = runCatching { AudioFragmentAnalyzer.analyze(file) }
-            .getOrDefault(AudioFragmentInfo(FloatArray(0), 0))
+            .getOrDefault(AudioFragmentInfo(emptyList(), 0))
         audioInfoCache[file.absolutePath] = CachedAudioInfo(file.lastModified(), info)
         return info
     }
