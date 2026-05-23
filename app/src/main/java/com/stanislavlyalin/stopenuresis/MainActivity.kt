@@ -1,13 +1,32 @@
 package com.stanislavlyalin.stopenuresis
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var bottomNavigationView: BottomNavigationView
+
+    private val samplesChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action != DataCollectionRecordingService.ACTION_SAMPLES_CHANGED) return
+            updateDataCollectionNavTitle()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         AppCompatDelegate.setDefaultNightMode(
@@ -29,8 +48,20 @@ class MainActivity : AppCompatActivity() {
         graph.setStartDestination(getStartDestination())
         navController.graph = graph
 
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavigation)
+        bottomNavigationView = findViewById(R.id.bottomNavigation)
         bottomNavigationView.setupWithNavController(navController)
+        updateDataCollectionNavTitle()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        registerSamplesChangedReceiver()
+        updateDataCollectionNavTitle()
+    }
+
+    override fun onStop() {
+        unregisterSamplesChangedReceiver()
+        super.onStop()
     }
 
     private fun getStartDestination(): Int {
@@ -57,5 +88,49 @@ class MainActivity : AppCompatActivity() {
 
     private fun hasTrainedModel(): Boolean {
         return AppStorage.modelFile(this).exists()
+    }
+
+    private fun registerSamplesChangedReceiver() {
+        val filter = IntentFilter(DataCollectionRecordingService.ACTION_SAMPLES_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(samplesChangedReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            @Suppress("DEPRECATION")
+            registerReceiver(samplesChangedReceiver, filter)
+        }
+    }
+
+    private fun unregisterSamplesChangedReceiver() {
+        runCatching { unregisterReceiver(samplesChangedReceiver) }
+    }
+
+    private fun updateDataCollectionNavTitle() {
+        val pendingSamplesCount = pendingSamplesCount()
+        val menuItem = bottomNavigationView.menu.findItem(R.id.dataCollectionFragment)
+        menuItem.title = if (pendingSamplesCount > 0) {
+            buildDataCollectionNavTitle(pendingSamplesCount)
+        } else {
+            getString(R.string.bottomNavCollectData)
+        }
+    }
+
+    private fun buildDataCollectionNavTitle(pendingSamplesCount: Int): CharSequence {
+        val baseTitle = getString(R.string.bottomNavCollectData)
+        val counter = getString(R.string.bottomNavCollectDataCounter, pendingSamplesCount)
+        return SpannableString(baseTitle + counter).apply {
+            setSpan(
+                ForegroundColorSpan(Color.RED),
+                baseTitle.length,
+                length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+    }
+
+    private fun pendingSamplesCount(): Int {
+        val samplesDir = AppStorage.samplesDir(this)
+        return samplesDir.listFiles { file ->
+            file.isFile && file.name.endsWith("_1_unchecked.wav")
+        }?.size ?: 0
     }
 }

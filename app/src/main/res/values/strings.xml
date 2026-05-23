@@ -10,6 +10,7 @@
     <string name="bottomNavTraining">ОБУЧЕНИЕ</string>
     <string name="bottomNavUsage">ЗАПУСК</string>
     <string name="bottomNavSettings">НАСТРОЙКИ</string>
+    <string name="bottomNavCollectDataCounter">(%1$d)</string>
     <string name="volumeThreshold">Порог срабатывания</string>
     <string name="volumeThresholdValue">Порог срабатывания: %1$d</string>
     <string name="silenceCounterInitial">тишина: 0</string>
@@ -52,7 +53,7 @@
     <string name="trainingDatasetTitle">Выборка:</string>
     <string name="trainingDatasetPositiveLine">ёрзает: %1$d примеров</string>
     <string name="trainingDatasetNegativeLine">тишина: %1$d примеров</string>
-    <string name="trainingDatasetLevelRange"> (уровень %1$d-%2$d)</string>
+    <string name="trainingDatasetLevelRange">(уровень %1$d-%2$d)</string>
     <string name="trainingProgressDescription">Обработано файлов: %1$d из %2$d</string>
     <string name="balanceTrainingDataset">Сбалансировать выборку</string>
     <string name="startTraining">Начать обучение</string>

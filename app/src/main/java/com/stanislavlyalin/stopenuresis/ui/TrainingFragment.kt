@@ -234,6 +234,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         if (levelRange == null) return
 
         val start = length
+        append(' ')
         append(
             getString(
                 R.string.trainingDatasetLevelRange,

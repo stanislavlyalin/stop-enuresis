@@ -327,6 +327,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
                 silenceFilesCount++
                 updateSampleCounters()
             }
+            notifySamplesChanged()
         }
         refreshAudioFragmentsList()
         Toast.makeText(
@@ -449,6 +450,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             rustlingFilesCount++
             updateSampleCounters()
         }
+        if (approved) notifySamplesChanged()
         refreshAudioFragmentsList()
         Toast.makeText(
             requireContext(),
@@ -526,5 +528,12 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude.setVisibleXRangeMaximum(maxVisiblePoints.toFloat())
         lineChartAmplitude.moveViewToX(chartX)
         lineChartAmplitude.invalidate()
+    }
+
+    private fun notifySamplesChanged() {
+        val context = requireContext()
+        context.sendBroadcast(Intent(DataCollectionRecordingService.ACTION_SAMPLES_CHANGED).apply {
+            setPackage(context.packageName)
+        })
     }
 }
