@@ -18,9 +18,9 @@ class SampleFileBuilder(
 
     private var threshold: Float = 0f
 
-    private val fragmentBuffer = ShortArray(fragmentSizeSamples)
-    private var fragmentBufferSize = 0
-    private var envelopeSum = 0f
+    private val recentAudioWindow = RecentAudioWindow(fragmentSizeSamples)
+    private var samplesSinceLastRustlingWrite = fragmentSizeSamples
+    private var samplesSinceLastSilenceDecision = fragmentSizeSamples
     private var negativeFragmentCounter = 0
 
     init {
@@ -36,57 +36,63 @@ class SampleFileBuilder(
     }
 
     fun reset() {
-        fragmentBufferSize = 0
-        envelopeSum = 0f
+        recentAudioWindow.clear()
+        samplesSinceLastRustlingWrite = fragmentSizeSamples
+        samplesSinceLastSilenceDecision = fragmentSizeSamples
         negativeFragmentCounter = 0
     }
 
     fun addSamples(
         pcm16MonoSamples: ShortArray,
-        envelopeSamples: FloatArray,
         readCount: Int
     ) {
         if (readCount <= 0) return
         require(readCount <= pcm16MonoSamples.size) {
             "readCount ($readCount) must be <= pcm16MonoSamples.size (${pcm16MonoSamples.size})"
         }
-        require(readCount <= envelopeSamples.size) {
-            "readCount ($readCount) must be <= envelopeSamples.size (${envelopeSamples.size})"
-        }
 
-        for (i in 0 until readCount) {
-            fragmentBuffer[fragmentBufferSize] = pcm16MonoSamples[i]
-            envelopeSum += envelopeSamples[i]
-            fragmentBufferSize++
+        recentAudioWindow.append(pcm16MonoSamples, readCount)
+        samplesSinceLastRustlingWrite =
+            (samplesSinceLastRustlingWrite + readCount).coerceAtMost(fragmentSizeSamples)
+        samplesSinceLastSilenceDecision =
+            (samplesSinceLastSilenceDecision + readCount).coerceAtMost(fragmentSizeSamples)
 
-            if (fragmentBufferSize == fragmentSizeSamples) {
-                handleCompletedFragment()
-                fragmentBufferSize = 0
-                envelopeSum = 0f
-            }
+        if (recentAudioWindow.isFull) {
+            handleCurrentFragment()
         }
     }
 
-    private fun handleCompletedFragment() {
-        val averageEnvelope = envelopeSum / fragmentSizeSamples.toFloat()
+    private fun handleCurrentFragment() {
+        val fragment = recentAudioWindow.copySamples()
+        val averageEnvelope = AudioEnvelope.averageSmoothedAbsolute(
+            input = fragment,
+            sampleRate = sampleRate
+        )
         val hasRustling = averageEnvelope >= threshold
 
         if (hasRustling) {
-            dispatchWrite(
-                pcm16MonoSamples = fragmentBuffer.copyOf(),
-                classLabel = 1,
-                unchecked = true
-            )
+            samplesSinceLastSilenceDecision = 0
+            if (samplesSinceLastRustlingWrite >= fragmentSizeSamples) {
+                dispatchWrite(
+                    pcm16MonoSamples = fragment,
+                    classLabel = 1,
+                    unchecked = true
+                )
+                samplesSinceLastRustlingWrite = 0
+            }
             return
         }
 
-        negativeFragmentCounter++
-        if (negativeFragmentCounter % NEGATIVE_FRAGMENT_SAVE_INTERVAL == 0) {
-            dispatchWrite(
-                pcm16MonoSamples = fragmentBuffer.copyOf(),
-                classLabel = 0,
-                unchecked = false
-            )
+        if (samplesSinceLastSilenceDecision >= fragmentSizeSamples) {
+            negativeFragmentCounter++
+            samplesSinceLastSilenceDecision = 0
+            if (negativeFragmentCounter % NEGATIVE_FRAGMENT_SAVE_INTERVAL == 0) {
+                dispatchWrite(
+                    pcm16MonoSamples = fragment,
+                    classLabel = 0,
+                    unchecked = false
+                )
+            }
         }
     }
 

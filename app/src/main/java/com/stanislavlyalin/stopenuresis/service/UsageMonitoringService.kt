@@ -24,7 +24,8 @@ import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.MainActivity
 import com.stanislavlyalin.stopenuresis.R
-import com.stanislavlyalin.stopenuresis.audio.StreamingMovingAverageSmoother
+import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
+import com.stanislavlyalin.stopenuresis.audio.RecentAudioWindow
 import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
 import com.stanislavlyalin.stopenuresis.training.MfccExtractor
 import com.stanislavlyalin.stopenuresis.training.WavAudio
@@ -146,10 +147,6 @@ class UsageMonitoringService : Service() {
             return
         }
 
-        val smoother = StreamingMovingAverageSmoother(
-            windowSeconds = 1f,
-            sampleRate = SAMPLE_RATE
-        )
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
         requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
@@ -162,52 +159,48 @@ class UsageMonitoringService : Service() {
         updateNotification()
         mainHandler.removeCallbacks(detectionStatusTick)
         mainHandler.postDelayed(detectionStatusTick, DETECTION_STATUS_UPDATE_MS)
-        smoother.reset()
 
         record.startRecording()
 
         listeningThread = thread(start = true, name = "UsageMonitoringServiceThread") {
             val buffer = ShortArray(bufferSize / 2)
-            val smoothedBuffer = FloatArray(buffer.size)
-            val fragmentBuffer = ShortArray(FRAGMENT_SIZE_SAMPLES)
-            var fragmentBufferSize = 0
-            var envelopeSum = 0f
+            val recentAudioWindow = RecentAudioWindow(FRAGMENT_SIZE_SAMPLES)
+            var samplesSinceLastClassification = FRAGMENT_SIZE_SAMPLES
             var alarmTriggerPosted = false
 
             while (isListening.get()) {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
-                smoother.smooth(buffer, readCount, smoothedBuffer)
+                recentAudioWindow.append(buffer, readCount)
+                samplesSinceLastClassification =
+                    (samplesSinceLastClassification + readCount).coerceAtMost(FRAGMENT_SIZE_SAMPLES)
 
-                for (i in 0 until readCount) {
-                    fragmentBuffer[fragmentBufferSize] = buffer[i]
-                    envelopeSum += smoothedBuffer[i]
-                    fragmentBufferSize++
+                if (!recentAudioWindow.isFull) continue
 
-                    if (fragmentBufferSize == FRAGMENT_SIZE_SAMPLES) {
-                        val shouldClassify =
-                            envelopeSum / FRAGMENT_SIZE_SAMPLES.toFloat() >= volumeThreshold
-                        val fragment = fragmentBuffer.copyOf()
-                        fragmentBufferSize = 0
-                        envelopeSum = 0f
+                val fragment = recentAudioWindow.copySamples()
+                val shouldClassify =
+                    AudioEnvelope.averageSmoothedAbsolute(
+                        input = fragment,
+                        sampleRate = SAMPLE_RATE
+                    ) >= volumeThreshold
 
-                        if (
-                            !alarmTriggerPosted &&
-                            shouldClassify &&
-                            canTriggerAlarm() &&
-                            isRustling(model, fragment)
-                        ) {
-                            val now = SystemClock.elapsedRealtime()
-                            addRustlingDetection(now)
-                            broadcastStatus()
-                            if (getRustlingDetectionCount() < requiredRustlingDetectionsPerMinute) {
-                                continue
-                            }
-                            alarmTriggerPosted = true
-                            mainHandler.post {
-                                if (usageState == STATE_MONITORING) triggerAlarm()
-                            }
+                if (shouldClassify && samplesSinceLastClassification >= FRAGMENT_SIZE_SAMPLES) {
+                    samplesSinceLastClassification = 0
+                    if (
+                        !alarmTriggerPosted &&
+                        canTriggerAlarm() &&
+                        isRustling(model, fragment)
+                    ) {
+                        val now = SystemClock.elapsedRealtime()
+                        addRustlingDetection(now)
+                        broadcastStatus()
+                        if (getRustlingDetectionCount() < requiredRustlingDetectionsPerMinute) {
+                            continue
+                        }
+                        alarmTriggerPosted = true
+                        mainHandler.post {
+                            if (usageState == STATE_MONITORING) triggerAlarm()
                         }
                     }
                 }

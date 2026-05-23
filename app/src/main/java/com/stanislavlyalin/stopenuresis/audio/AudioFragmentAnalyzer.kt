@@ -14,27 +14,22 @@ data class AudioFragmentInfo(
 object AudioFragmentAnalyzer {
 
     private const val TARGET_WAVEFORM_POINTS = 48
-    private const val SMOOTHING_WINDOW_SECONDS = 1f
-
     fun analyze(file: File): AudioFragmentInfo {
         val wav = readPcm16Mono(file)
         if (wav.samples.isEmpty()) {
             return AudioFragmentInfo(FloatArray(0), 0)
         }
 
-        val smoother = StreamingMovingAverageSmoother(
-            windowSeconds = SMOOTHING_WINDOW_SECONDS,
+        val smoothed = FloatArray(wav.samples.size)
+        val averageAmplitude = AudioEnvelope.smoothAbsolute(
+            input = wav.samples,
+            output = smoothed,
             sampleRate = wav.sampleRate
         )
-        val smoothed = FloatArray(wav.samples.size)
-        smoother.smooth(wav.samples, smoothed)
-
-        var sum = 0.0
-        for (value in smoothed) sum += value.toDouble()
 
         return AudioFragmentInfo(
             waveform = buildWaveform(smoothed),
-            averageAmplitude = (sum / smoothed.size.toDouble()).toInt()
+            averageAmplitude = averageAmplitude.toInt()
         )
     }
 

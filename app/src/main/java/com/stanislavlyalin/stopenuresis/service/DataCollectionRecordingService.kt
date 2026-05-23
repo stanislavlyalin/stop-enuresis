@@ -139,7 +139,7 @@ class DataCollectionRecordingService : Service() {
                 if (readCount <= 0) continue
 
                 smoother.smooth(buffer, readCount, smoothedBuffer)
-                sampleFileBuilder.addSamples(buffer, smoothedBuffer, readCount)
+                sampleFileBuilder.addSamples(buffer, readCount)
 
                 val chartPoints = ArrayList<Float>()
                 for (i in 0 until readCount) {
