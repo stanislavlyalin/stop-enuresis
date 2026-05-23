@@ -61,6 +61,34 @@
             android:layout_height="56dp"
             android:text="@string/startTraining" />
 
+        <FrameLayout
+            android:id="@+id/layoutTrainingProgress"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ProgressBar
+                android:id="@+id/progressTrainingFiles"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:indeterminate="false"
+                android:max="1"
+                android:progress="0"
+                android:progressDrawable="@drawable/progress_training_files" />
+
+            <TextView
+                android:id="@+id/tvTrainingProgress"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="@string/trainingInProgress"
+                android:textAppearance="?attr/textAppearanceLabelLarge"
+                android:textColor="#7A726F" />
+
+        </FrameLayout>
+
         <Button
             android:id="@+id/btnClearTrainingDataset"
             android:layout_width="match_parent"

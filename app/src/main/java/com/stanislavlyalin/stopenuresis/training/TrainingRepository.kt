@@ -1,11 +1,20 @@
 package com.stanislavlyalin.stopenuresis.training
 
+import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
 import java.io.File
+import kotlin.math.roundToInt
 import kotlin.random.Random
 
 data class TrainingDatasetStats(
     val positiveCount: Int,
-    val negativeCount: Int
+    val negativeCount: Int,
+    val positiveAverageLevel: Int? = null,
+    val negativeAverageLevel: Int? = null
+)
+
+data class TrainingProgress(
+    val processedFiles: Int,
+    val totalFiles: Int
 )
 
 data class TrainingResult(
@@ -19,12 +28,42 @@ class TrainingRepository(
 ) {
     private val mfccExtractor = MfccExtractor()
     private val trainer = LogisticRegressionTrainer()
+    private val averageLevelCache = mutableMapOf<String, CachedAverageLevel>()
 
     fun getDatasetStats(): TrainingDatasetStats {
         val files = listSampleFiles()
+        var positiveCount = 0
+        var negativeCount = 0
+        var positiveLevelSum = 0.0
+        var negativeLevelSum = 0.0
+        var positiveLevelCount = 0
+        var negativeLevelCount = 0
+
+        files.forEach { file ->
+            when (getStatsLabel(file)) {
+                1 -> {
+                    positiveCount++
+                    readAverageLevel(file)?.let { level ->
+                        positiveLevelSum += level.toDouble()
+                        positiveLevelCount++
+                    }
+                }
+
+                0 -> {
+                    negativeCount++
+                    readAverageLevel(file)?.let { level ->
+                        negativeLevelSum += level.toDouble()
+                        negativeLevelCount++
+                    }
+                }
+            }
+        }
+
         return TrainingDatasetStats(
-            positiveCount = files.count { it.name.endsWith("_1.wav") },
-            negativeCount = files.count { getLabel(it) == 0 }
+            positiveCount = positiveCount,
+            negativeCount = negativeCount,
+            positiveAverageLevel = averageLevel(positiveLevelSum, positiveLevelCount),
+            negativeAverageLevel = averageLevel(negativeLevelSum, negativeLevelCount)
         )
     }
 
@@ -37,9 +76,12 @@ class TrainingRepository(
         }.getOrNull()
     }
 
-    fun train(balanceDataset: Boolean): TrainingResult {
+    fun train(
+        balanceDataset: Boolean,
+        onProgress: (TrainingProgress) -> Unit = {}
+    ): TrainingResult {
         val labeledFiles = listSampleFiles()
-            .mapNotNull { file -> getLabel(file)?.let { label -> file to label } }
+            .mapNotNull { file -> getStatsLabel(file)?.let { label -> file to label } }
 
         val random = Random(System.currentTimeMillis())
         val positives = labeledFiles.filter { it.second == 1 }
@@ -64,10 +106,20 @@ class TrainingRepository(
         val negativeSplit = splitClassSamples(trainingNegatives, random)
         val trainSet = (positiveSplit.first + negativeSplit.first).shuffled(random)
         val testSet = (positiveSplit.second + negativeSplit.second).shuffled(random)
+        val totalFeatureFiles = trainSet.size + testSet.size
+        var processedFeatureFiles = 0
 
-        val trainFeatures = trainSet.map { mfccExtractor.extractFeatures(WavReader.readPcm16Mono(it.first)) }
+        fun extractFeatures(file: File): DoubleArray {
+            val features = mfccExtractor.extractFeatures(WavReader.readPcm16Mono(file))
+            processedFeatureFiles++
+            onProgress(TrainingProgress(processedFeatureFiles, totalFeatureFiles))
+            return features
+        }
+
+        onProgress(TrainingProgress(0, totalFeatureFiles))
+        val trainFeatures = trainSet.map { extractFeatures(it.first) }
         val trainLabels = trainSet.map { it.second }
-        val testFeatures = testSet.map { mfccExtractor.extractFeatures(WavReader.readPcm16Mono(it.first)) }
+        val testFeatures = testSet.map { extractFeatures(it.first) }
         val testLabels = testSet.map { it.second }
 
         val model = trainer.train(
@@ -90,6 +142,7 @@ class TrainingRepository(
 
     fun clearDataset() {
         listSampleFiles().forEach { it.delete() }
+        averageLevelCache.clear()
     }
 
     private fun listSampleFiles(): List<File> {
@@ -108,6 +161,38 @@ class TrainingRepository(
         }
     }
 
+    private fun getStatsLabel(file: File): Int? {
+        val name = file.name
+        return when {
+            name.endsWith("_1.wav") -> 1
+            name.endsWith("_0.wav") -> 0
+            else -> null
+        }
+    }
+
+    private fun readAverageLevel(file: File): Float? {
+        val key = file.absolutePath
+        val cached = averageLevelCache[key]
+        if (cached != null && cached.lastModified == file.lastModified()) {
+            return cached.averageLevel
+        }
+
+        val averageLevel = runCatching {
+            val pcm = WavReader.readPcm16MonoSamples(file)
+            AudioEnvelope.averageSmoothedAbsolute(
+                input = pcm.samples,
+                sampleRate = pcm.sampleRate
+            )
+        }.getOrNull()
+        averageLevelCache[key] = CachedAverageLevel(file.lastModified(), averageLevel)
+        return averageLevel
+    }
+
+    private fun averageLevel(sum: Double, count: Int): Int? {
+        if (count == 0) return null
+        return (sum / count.toDouble()).roundToInt()
+    }
+
     private fun splitClassSamples(
         samples: List<Pair<File, Int>>,
         random: Random
@@ -122,4 +207,9 @@ class TrainingRepository(
         const val TRAIN_SPLIT = 0.7
         const val MIN_SAMPLES_PER_CLASS = 2
     }
+
+    private data class CachedAverageLevel(
+        val lastModified: Long,
+        val averageLevel: Float?
+    )
 }

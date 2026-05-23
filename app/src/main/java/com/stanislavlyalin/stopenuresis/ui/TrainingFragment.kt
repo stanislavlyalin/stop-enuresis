@@ -1,9 +1,14 @@
 package com.stanislavlyalin.stopenuresis.ui
 
+import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -11,6 +16,7 @@ import androidx.fragment.app.Fragment
 import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.training.TrainingDatasetStats
+import com.stanislavlyalin.stopenuresis.training.TrainingProgress
 import com.stanislavlyalin.stopenuresis.training.TrainingRepository
 import com.stanislavlyalin.stopenuresis.training.TrainingResult
 import kotlin.concurrent.thread
@@ -22,10 +28,14 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
     private lateinit var tvTrainingDatasetStats: TextView
     private lateinit var checkBoxBalanceDataset: CheckBox
     private lateinit var btnStartTraining: Button
+    private lateinit var layoutTrainingProgress: View
+    private lateinit var progressTrainingFiles: ProgressBar
+    private lateinit var tvTrainingProgress: TextView
     private lateinit var btnClearTrainingDataset: Button
     private lateinit var trainingRepository: TrainingRepository
 
     private var isTraining = false
+    private var trainingProgress = TrainingProgress(0, 1)
     private var lastAccuracy: Double? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,6 +45,9 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         tvTrainingDatasetStats = view.findViewById(R.id.tvTrainingDatasetStats)
         checkBoxBalanceDataset = view.findViewById(R.id.checkBoxBalanceDataset)
         btnStartTraining = view.findViewById(R.id.btnStartTraining)
+        layoutTrainingProgress = view.findViewById(R.id.layoutTrainingProgress)
+        progressTrainingFiles = view.findViewById(R.id.progressTrainingFiles)
+        tvTrainingProgress = view.findViewById(R.id.tvTrainingProgress)
         btnClearTrainingDataset = view.findViewById(R.id.btnClearTrainingDataset)
 
         trainingRepository = TrainingRepository(
@@ -71,12 +84,15 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         }
 
         btnStartTraining.isEnabled = !isTraining
+        btnStartTraining.visibility = if (isTraining) View.GONE else View.VISIBLE
+        layoutTrainingProgress.visibility = if (isTraining) View.VISIBLE else View.GONE
         checkBoxBalanceDataset.isEnabled = !isTraining
         btnStartTraining.text = if (isTraining) {
             getString(R.string.trainingInProgress)
         } else {
             getString(R.string.startTraining)
         }
+        updateTrainingProgress()
         btnClearTrainingDataset.visibility = if (hasModel && !isTraining) View.VISIBLE else View.GONE
     }
 
@@ -100,17 +116,25 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         val balanceDataset = checkBoxBalanceDataset.isChecked
         val existingAccuracy = trainingRepository.readModelAccuracy()
         isTraining = true
+        trainingProgress = TrainingProgress(
+            processedFiles = 0,
+            totalFiles = effectiveStats.positiveCount + effectiveStats.negativeCount
+        )
         refreshUi()
 
         thread(start = true, name = "ModelTrainingThread") {
             val result = runCatching {
-                trainingRepository.train(balanceDataset = balanceDataset)
+                trainingRepository.train(
+                    balanceDataset = balanceDataset,
+                    onProgress = { progress -> postTrainingProgress(progress) }
+                )
             }
 
             activity?.runOnUiThread {
                 if (!isAdded || view == null) return@runOnUiThread
 
                 isTraining = false
+                trainingProgress = TrainingProgress(0, 1)
                 result
                     .onSuccess {
                         handleTrainingSuccess(it, existingAccuracy)
@@ -183,19 +207,71 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
             .show()
     }
 
-    private fun formatDatasetStats(stats: TrainingDatasetStats): String {
-        return getString(
-            R.string.trainingDatasetStats,
-            stats.positiveCount,
-            stats.negativeCount
+    private fun formatDatasetStats(stats: TrainingDatasetStats): CharSequence {
+        return SpannableStringBuilder().apply {
+            append(getString(R.string.trainingDatasetTitle))
+            append('\n')
+            appendDatasetLine(
+                line = getString(R.string.trainingDatasetPositiveLine, stats.positiveCount),
+                averageLevel = stats.positiveAverageLevel,
+                levelColor = Color.RED
+            )
+            append('\n')
+            appendDatasetLine(
+                line = getString(R.string.trainingDatasetNegativeLine, stats.negativeCount),
+                averageLevel = stats.negativeAverageLevel,
+                levelColor = Color.rgb(0, 140, 0)
+            )
+        }
+    }
+
+    private fun SpannableStringBuilder.appendDatasetLine(
+        line: String,
+        averageLevel: Int?,
+        levelColor: Int
+    ) {
+        append(line)
+        if (averageLevel == null) return
+
+        val start = length
+        append(getString(R.string.trainingDatasetAverageLevel, averageLevel))
+        setSpan(
+            ForegroundColorSpan(levelColor),
+            start,
+            length,
+            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
         )
+    }
+
+    private fun postTrainingProgress(progress: TrainingProgress) {
+        activity?.runOnUiThread {
+            if (!isAdded || view == null || !isTraining) return@runOnUiThread
+
+            trainingProgress = progress
+            updateTrainingProgress()
+        }
+    }
+
+    private fun updateTrainingProgress() {
+        if (!::progressTrainingFiles.isInitialized) return
+
+        val maxProgress = trainingProgress.totalFiles.coerceAtLeast(1)
+        val currentProgress = trainingProgress.processedFiles.coerceIn(0, maxProgress)
+        progressTrainingFiles.max = maxProgress
+        progressTrainingFiles.progress = currentProgress
+        progressTrainingFiles.contentDescription = getString(
+            R.string.trainingProgressDescription,
+            currentProgress,
+            maxProgress
+        )
+        tvTrainingProgress.text = getString(R.string.trainingInProgress)
     }
 
     private fun getVisibleDatasetStats(stats: TrainingDatasetStats): TrainingDatasetStats {
         if (!checkBoxBalanceDataset.isChecked) return stats
 
         val balancedCount = minOf(stats.positiveCount, stats.negativeCount)
-        return TrainingDatasetStats(
+        return stats.copy(
             positiveCount = balancedCount,
             negativeCount = balancedCount
         )

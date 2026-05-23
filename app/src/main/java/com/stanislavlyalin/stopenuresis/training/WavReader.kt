@@ -10,9 +10,22 @@ data class WavAudio(
     val samples: FloatArray
 )
 
+data class Pcm16MonoSamples(
+    val sampleRate: Int,
+    val samples: ShortArray
+)
+
 object WavReader {
 
     fun readPcm16Mono(file: File): WavAudio {
+        val pcm = readPcm16MonoSamples(file)
+        val samples = FloatArray(pcm.samples.size) { index ->
+            pcm.samples[index].toFloat() / Short.MAX_VALUE.toFloat()
+        }
+        return WavAudio(pcm.sampleRate, samples)
+    }
+
+    fun readPcm16MonoSamples(file: File): Pcm16MonoSamples {
         val bytes = file.readBytes()
         if (bytes.size < 44) throw IOException("WAV file is too small: ${file.name}")
         if (String(bytes, 0, 4, Charsets.US_ASCII) != "RIFF") {
@@ -63,12 +76,12 @@ object WavReader {
         }
 
         val sampleCount = dataSize / 2
-        val samples = FloatArray(sampleCount)
+        val samples = ShortArray(sampleCount)
         val buffer = ByteBuffer.wrap(bytes, dataOffset, dataSize).order(ByteOrder.LITTLE_ENDIAN)
         for (i in 0 until sampleCount) {
-            samples[i] = buffer.short.toFloat() / Short.MAX_VALUE.toFloat()
+            samples[i] = buffer.short
         }
-        return WavAudio(sampleRate, samples)
+        return Pcm16MonoSamples(sampleRate, samples)
     }
 
     private fun readIntLe(bytes: ByteArray, offset: Int): Int {

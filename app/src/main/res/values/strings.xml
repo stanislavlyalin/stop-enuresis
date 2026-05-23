@@ -49,6 +49,11 @@
     <string name="trainingInProgress">Идёт обучение</string>
     <string name="modelTrainedWithAccuracy">Модель обучена\nТочность: %1$d%%</string>
     <string name="trainingDatasetStats">Выборка:\nёрзает: %1$d примеров\nтишина: %2$d примеров</string>
+    <string name="trainingDatasetTitle">Выборка:</string>
+    <string name="trainingDatasetPositiveLine">ёрзает: %1$d примеров</string>
+    <string name="trainingDatasetNegativeLine">тишина: %1$d примеров</string>
+    <string name="trainingDatasetAverageLevel"> (уровень %1$d)</string>
+    <string name="trainingProgressDescription">Обработано файлов: %1$d из %2$d</string>
     <string name="balanceTrainingDataset">Сбалансировать выборку</string>
     <string name="startTraining">Начать обучение</string>
     <string name="clearTrainingDataset">Очистить выборку</string>
