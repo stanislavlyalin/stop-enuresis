@@ -17,7 +17,8 @@ import java.util.Locale
 class AudioFragmentsAdapter(
     private val onPlay: (File) -> Unit,
     private val onStop: () -> Unit,
-    private val onRemove: (File) -> Unit,
+    private val onDelete: (File) -> Unit,
+    private val onReject: (File) -> Unit,
     private val onApprove: (File) -> Unit
 ) : RecyclerView.Adapter<AudioFragmentsAdapter.ViewHolder>() {
 
@@ -63,6 +64,7 @@ class AudioFragmentsAdapter(
         private val waveformView: WaveformView = itemView.findViewById(R.id.waveformAudioFragment)
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
+        private val btnReject: ImageButton = itemView.findViewById(R.id.btnReject)
         private val btnAccept: ImageButton = itemView.findViewById(R.id.btnAccept)
 
         fun bind(file: File) {
@@ -87,7 +89,8 @@ class AudioFragmentsAdapter(
                     onPlay(file)
                 }
             }
-            btnDelete.setOnClickListener { onRemove(file) }
+            btnDelete.setOnClickListener { onDelete(file) }
+            btnReject.setOnClickListener { onReject(file) }
             btnAccept.setOnClickListener { onApprove(file) }
         }
     }

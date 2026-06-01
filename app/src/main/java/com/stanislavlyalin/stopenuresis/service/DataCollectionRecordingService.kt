@@ -53,6 +53,9 @@ class DataCollectionRecordingService : Service() {
             ACTION_STOP -> stopRecording(stopService = true)
             ACTION_REQUEST_STATUS -> broadcastStatus()
             ACTION_ADJUST_REMOVED_RUSTLING -> adjustRemovedRustling()
+            ACTION_ADJUST_DELETED_RUSTLING -> adjustDeletedRustling(
+                intent.getIntExtra(EXTRA_ADJUST_COUNT, 1)
+            )
         }
         return START_STICKY
     }
@@ -210,6 +213,13 @@ class DataCollectionRecordingService : Service() {
         broadcastStatus()
     }
 
+    private fun adjustDeletedRustling(count: Int) {
+        if (!isRecording.get()) return
+        rustlingFilesCount = (rustlingFilesCount - count.coerceAtLeast(0)).coerceAtLeast(0)
+        updateNotification()
+        broadcastStatus()
+    }
+
     private fun broadcastStatus() {
         isRecordingNow = isRecording.get()
         silenceCountSnapshot = silenceFilesCount
@@ -301,7 +311,10 @@ class DataCollectionRecordingService : Service() {
             "com.stanislavlyalin.stopenuresis.action.REQUEST_DATA_COLLECTION_STATUS"
         private const val ACTION_ADJUST_REMOVED_RUSTLING =
             "com.stanislavlyalin.stopenuresis.action.ADJUST_REMOVED_RUSTLING"
+        private const val ACTION_ADJUST_DELETED_RUSTLING =
+            "com.stanislavlyalin.stopenuresis.action.ADJUST_DELETED_RUSTLING"
         private const val EXTRA_THRESHOLD = "threshold"
+        private const val EXTRA_ADJUST_COUNT = "adjustCount"
         private const val CHANNEL_ID = "data_collection_recording"
         private const val NOTIFICATION_ID = 1001
 
@@ -335,6 +348,13 @@ class DataCollectionRecordingService : Service() {
         fun adjustRemovedRustling(context: Context) {
             context.startService(Intent(context, DataCollectionRecordingService::class.java).apply {
                 action = ACTION_ADJUST_REMOVED_RUSTLING
+            })
+        }
+
+        fun adjustDeletedRustling(context: Context, count: Int = 1) {
+            context.startService(Intent(context, DataCollectionRecordingService::class.java).apply {
+                action = ACTION_ADJUST_DELETED_RUSTLING
+                putExtra(EXTRA_ADJUST_COUNT, count)
             })
         }
     }

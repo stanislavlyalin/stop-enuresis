@@ -24,7 +24,18 @@
         android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/deleteAudioFragment"
-        android:src="@android:drawable/ic_menu_delete"
+        android:src="@drawable/ic_delete_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnReject"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnReject"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/rejectAudioFragment"
+        android:src="@drawable/ic_close_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnAccept"
         app:layout_constraintTop_toTopOf="parent" />
@@ -35,7 +46,7 @@
         android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/acceptAudioFragment"
-        android:src="@android:drawable/ic_menu_save"
+        android:src="@drawable/ic_check_24"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

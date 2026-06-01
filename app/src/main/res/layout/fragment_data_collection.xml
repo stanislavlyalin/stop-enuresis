@@ -78,13 +78,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
+        android:layout_marginEnd="2dp"
         android:text="@string/rustlingCounterInitial"
         android:textAppearance="?attr/textAppearanceBodyMedium"
         android:textColor="#C62828"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/btnClearPendingSamples"
         tools:text="ёрзает: 0" />
+
+    <ImageButton
+        android:id="@+id/btnClearPendingSamples"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/clearPendingSamples"
+        android:src="@drawable/ic_delete_24"
+        app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <TextView
         android:id="@+id/tvRemainingCounter"
@@ -109,7 +120,7 @@
         android:paddingBottom="8dp"
         tools:itemCount="2"
         tools:listitem="@layout/item_audio_fragment_placeholder"
-        app:layout_constraintTop_toBottomOf="@id/tvSilenceCounter"
+        app:layout_constraintTop_toBottomOf="@id/btnClearPendingSamples"
         app:layout_constraintBottom_toTopOf="@id/btnRecordToggle"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
