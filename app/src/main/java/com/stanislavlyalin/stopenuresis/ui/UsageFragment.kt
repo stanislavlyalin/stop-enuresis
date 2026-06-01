@@ -20,6 +20,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.View
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -48,6 +49,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private lateinit var layoutRustlingDetections: LinearLayout
     private lateinit var tvNextAlarmAllowed: TextView
     private lateinit var btnUsageMain: Button
+    private lateinit var cbSaveSamples: CheckBox
     private lateinit var layoutUsageFeedback: LinearLayout
     private lateinit var btnFalseAlarm: Button
     private lateinit var btnSuccess: Button
@@ -121,9 +123,15 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         layoutRustlingDetections = view.findViewById(R.id.layoutRustlingDetections)
         tvNextAlarmAllowed = view.findViewById(R.id.tvNextAlarmAllowed)
         btnUsageMain = view.findViewById(R.id.btnUsageMain)
+        cbSaveSamples = view.findViewById(R.id.cbSaveSamples)
         layoutUsageFeedback = view.findViewById(R.id.layoutUsageFeedback)
         btnFalseAlarm = view.findViewById(R.id.btnFalseAlarm)
         btnSuccess = view.findViewById(R.id.btnSuccess)
+
+        cbSaveSamples.isChecked = AppSettings.isUsageSampleSavingEnabled(requireContext())
+        cbSaveSamples.setOnCheckedChangeListener { _, isChecked ->
+            AppSettings.setUsageSampleSavingEnabled(requireContext(), isChecked)
+        }
 
         btnUsageMain.setOnClickListener {
             when (usageState) {
@@ -246,6 +254,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         layoutUsageFeedback.visibility = if (state == UsageState.POST_ALARM) View.VISIBLE else View.GONE
         layoutRustlingDetections.visibility =
             if (state == UsageState.MONITORING) View.VISIBLE else View.GONE
+        if (::cbSaveSamples.isInitialized) {
+            cbSaveSamples.isEnabled = state == UsageState.IDLE || state == UsageState.POST_ALARM
+        }
     }
 
     private fun updateRustlingDetectionIndicator() {

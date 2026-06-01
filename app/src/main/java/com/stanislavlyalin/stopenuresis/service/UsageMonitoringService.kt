@@ -150,20 +150,26 @@ class UsageMonitoringService : Service() {
         }
 
         val volumeThreshold = AppSettings.getVolumeThreshold(this).toFloat()
+        val saveSamples = AppSettings.isUsageSampleSavingEnabled(this)
         requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
         AppStorage.migrateLegacyData(this)
-        val sampleFileBuilder = SampleFileBuilder(
-            fragmentSizeSamples = FRAGMENT_SIZE_SAMPLES,
-            sampleRate = SAMPLE_RATE,
-            channelCount = CHANNEL_COUNT,
-            bitsPerSample = BITS_PER_SAMPLE,
-            samplesDir = AppStorage.samplesDir(this),
-            wavFileWriter = ManualWavFileWriter(),
-            saveSilenceSamples = false,
-            onSampleFileWritten = { onTrainingSampleFileWritten() }
-        )
-        sampleFileBuilder.setThreshold(volumeThreshold)
+        val sampleFileBuilder = if (saveSamples) {
+            SampleFileBuilder(
+                fragmentSizeSamples = FRAGMENT_SIZE_SAMPLES,
+                sampleRate = SAMPLE_RATE,
+                channelCount = CHANNEL_COUNT,
+                bitsPerSample = BITS_PER_SAMPLE,
+                samplesDir = AppStorage.samplesDir(this),
+                wavFileWriter = ManualWavFileWriter(),
+                saveSilenceSamples = false,
+                onSampleFileWritten = { onTrainingSampleFileWritten() }
+            ).apply {
+                setThreshold(volumeThreshold)
+            }
+        } else {
+            null
+        }
 
         audioRecord = record
         isListening.set(true)
@@ -186,7 +192,7 @@ class UsageMonitoringService : Service() {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
-                sampleFileBuilder.addSamples(buffer, readCount)
+                sampleFileBuilder?.addSamples(buffer, readCount)
                 recentAudioWindow.append(buffer, readCount)
                 samplesSinceLastClassification =
                     (samplesSinceLastClassification + readCount).coerceAtMost(FRAGMENT_SIZE_SAMPLES)

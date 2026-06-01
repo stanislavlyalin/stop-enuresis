@@ -89,6 +89,7 @@
     <string name="success">Успех!</string>
     <string name="modelFileNotFound">Сначала обучите модель</string>
     <string name="nextAlarmAllowed">Следующее срабатывание не ранее %1$s</string>
+    <string name="saveUsageSamples">Сохранять семплы</string>
     <string name="dataCollectionNotificationChannel">Сбор данных</string>
     <string name="dataCollectionNotificationTitle">Идёт запись данных</string>
     <string name="dataCollectionNotificationText">тишина: %1$d, ёрзает: %2$d</string>

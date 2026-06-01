@@ -6,6 +6,7 @@ object AppSettings {
     const val DEFAULT_VOLUME_THRESHOLD = 75
     const val DEFAULT_COOLDOWN_HOURS = 2
     const val DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE = 3
+    const val DEFAULT_USAGE_SAMPLE_SAVING_ENABLED = true
 
     private const val PREFS_NAME = "stop_enuresis_settings"
     private const val KEY_ABOUT_SCREEN_SEEN = "about_screen_seen"
@@ -14,6 +15,7 @@ object AppSettings {
     private const val KEY_COOLDOWN_HOURS = "cooldown_hours"
     private const val KEY_ALARM_RUSTLING_DETECTIONS_PER_MINUTE =
         "alarm_rustling_detections_per_minute"
+    private const val KEY_USAGE_SAMPLE_SAVING_ENABLED = "usage_sample_saving_enabled"
 
     fun isAboutScreenSeen(context: Context): Boolean {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -77,6 +79,21 @@ object AppSettings {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putInt(KEY_ALARM_RUSTLING_DETECTIONS_PER_MINUTE, value.coerceIn(1, 12))
+            .apply()
+    }
+
+    fun isUsageSampleSavingEnabled(context: Context): Boolean {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getBoolean(
+                KEY_USAGE_SAMPLE_SAVING_ENABLED,
+                DEFAULT_USAGE_SAMPLE_SAVING_ENABLED
+            )
+    }
+
+    fun setUsageSampleSavingEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_USAGE_SAMPLE_SAVING_ENABLED, enabled)
             .apply()
     }
 }
