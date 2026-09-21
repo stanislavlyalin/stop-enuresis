@@ -335,13 +335,26 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
                 true
             }
             prepare()
-            playbackLoudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
-                setTargetGain(PLAYBACK_GAIN_MILLIBELS)
-                enabled = true
-            }
+            playbackLoudnessEnhancer = createPlaybackLoudnessEnhancer(audioSessionId)
             start()
         }
         playbackProgressHandler.post(playbackProgressRunnable)
+    }
+
+    private fun createPlaybackLoudnessEnhancer(audioSessionId: Int): LoudnessEnhancer? {
+        val enhancer = try {
+            LoudnessEnhancer(audioSessionId)
+        } catch (_: RuntimeException) {
+            return null
+        }
+        return try {
+            enhancer.setTargetGain(PLAYBACK_GAIN_MILLIBELS)
+            enhancer.enabled = true
+            enhancer
+        } catch (_: RuntimeException) {
+            enhancer.release()
+            null
+        }
     }
 
     private fun deleteAudioFragment(file: File) {
