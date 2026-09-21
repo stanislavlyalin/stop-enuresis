@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
+import android.media.audiofx.LoudnessEnhancer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -62,6 +63,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private var rustlingFilesCount = 0
 
     private var mediaPlayer: MediaPlayer? = null
+    private var playbackLoudnessEnhancer: LoudnessEnhancer? = null
     private var playingFile: File? = null
     private val playbackProgressHandler = Handler(Looper.getMainLooper())
     private val playbackProgressRunnable = object : Runnable {
@@ -136,6 +138,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         const val CHART_AXIS_LABEL_COUNT = 9
         const val THRESHOLD_MAX = 200
         const val PLAYBACK_PROGRESS_UPDATE_MS = 50L
+        // 20 * log10(3) дБ - усиление амплитуды семпла в три раза.
+        const val PLAYBACK_GAIN_MILLIBELS = 954
         const val SAMPLE_FILE_DATE_FORMAT = "yyyy.MM.dd_HH.mm.ss"
         const val UNCHECKED_RUSTLING_SUFFIX = "_1_unchecked.wav"
         const val SILENCE_SUFFIX = "_0.wav"
@@ -331,6 +335,10 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
                 true
             }
             prepare()
+            playbackLoudnessEnhancer = LoudnessEnhancer(audioSessionId).apply {
+                setTargetGain(PLAYBACK_GAIN_MILLIBELS)
+                enabled = true
+            }
             start()
         }
         playbackProgressHandler.post(playbackProgressRunnable)
@@ -678,6 +686,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun stopPlayback() {
         playbackProgressHandler.removeCallbacks(playbackProgressRunnable)
+        playbackLoudnessEnhancer?.release()
+        playbackLoudnessEnhancer = null
         mediaPlayer?.run {
             try {
                 if (isPlaying) stop()
