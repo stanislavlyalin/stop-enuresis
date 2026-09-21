@@ -1,6 +1,8 @@
 package com.stanislavlyalin.stopenuresis.ui
 
 import android.Manifest
+import android.app.AlertDialog
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -13,11 +15,13 @@ import android.media.AudioRecord
 import android.media.AudioManager
 import android.media.MediaRecorder
 import android.media.ToneGenerator
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
@@ -185,8 +189,17 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
     }
 
-    private fun startListening() {
+    private fun startListening(checkFullScreenIntentPermission: Boolean = true) {
         if (usageState == UsageState.MONITORING) return
+
+        if (
+            checkFullScreenIntentPermission &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE &&
+            !requireContext().getSystemService(NotificationManager::class.java).canUseFullScreenIntent()
+        ) {
+            showFullScreenIntentPermissionDialog()
+            return
+        }
 
         if (loadModel() == null) {
             Toast.makeText(
@@ -203,6 +216,24 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             AppSettings.getAlarmRustlingDetectionsPerMinute(requireContext())
         updateRustlingDetectionIndicator()
         UsageMonitoringService.start(requireContext())
+    }
+
+    private fun showFullScreenIntentPermissionDialog() {
+        AlertDialog.Builder(requireContext())
+            .setTitle(R.string.fullScreenAlarmPermissionTitle)
+            .setMessage(R.string.fullScreenAlarmPermissionMessage)
+            .setPositiveButton(R.string.openSettings) { _, _ ->
+                startActivity(
+                    Intent(
+                        Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT,
+                        Uri.parse("package:${requireContext().packageName}")
+                    )
+                )
+            }
+            .setNegativeButton(R.string.continueWithoutLockScreen) { _, _ ->
+                startListening(checkFullScreenIntentPermission = false)
+            }
+            .show()
     }
 
     private fun stopListening() {
