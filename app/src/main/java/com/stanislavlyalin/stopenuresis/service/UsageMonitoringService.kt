@@ -61,7 +61,9 @@ class UsageMonitoringService : Service() {
     private val detectionStatusTick = object : Runnable {
         override fun run() {
             if (usageState != STATE_MONITORING) return
-            pruneRustlingDetections(SystemClock.elapsedRealtime())
+            val nowElapsedRealtime = SystemClock.elapsedRealtime()
+            pruneRustlingDetections(nowElapsedRealtime)
+            clearExpiredCooldown(nowElapsedRealtime)
             broadcastStatus()
             mainHandler.postDelayed(this, DETECTION_STATUS_UPDATE_MS)
         }
@@ -436,6 +438,13 @@ class UsageMonitoringService : Service() {
     private fun clearRustlingDetections() {
         synchronized(rustlingDetectionTimes) {
             rustlingDetectionTimes.clear()
+        }
+    }
+
+    private fun clearExpiredCooldown(nowElapsedRealtime: Long) {
+        if (cooldownUntilElapsedRealtime in 1..nowElapsedRealtime) {
+            cooldownUntilElapsedRealtime = 0L
+            cooldownUntilWallClockMillis = 0L
         }
     }
 
