@@ -83,7 +83,7 @@ class UsageMonitoringService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startListening()
+            ACTION_START -> startListening(applyStartProtection = true)
             ACTION_STOP -> stopListening(stopService = true)
             ACTION_TURN_OFF_ALARM -> turnOffAlarm()
             ACTION_CONTINUE_MONITORING -> continueMonitoring(
@@ -101,7 +101,7 @@ class UsageMonitoringService : Service() {
         super.onDestroy()
     }
 
-    private fun startListening() {
+    private fun startListening(applyStartProtection: Boolean) {
         if (usageState == STATE_MONITORING) {
             broadcastStatus()
             return
@@ -153,6 +153,16 @@ class UsageMonitoringService : Service() {
         val saveSamples = AppSettings.isUsageSampleSavingEnabled(this)
         requiredRustlingDetectionsPerMinute =
             AppSettings.getAlarmRustlingDetectionsPerMinute(this)
+        if (applyStartProtection) {
+            val protectionMillis = AppSettings.getListeningStartProtectionHours(this) * HOUR_MS
+            if (protectionMillis > 0L) {
+                cooldownUntilElapsedRealtime = SystemClock.elapsedRealtime() + protectionMillis
+                cooldownUntilWallClockMillis = System.currentTimeMillis() + protectionMillis
+            } else {
+                cooldownUntilElapsedRealtime = 0L
+                cooldownUntilWallClockMillis = 0L
+            }
+        }
         AppStorage.migrateLegacyData(this)
         val sampleFileBuilder = if (saveSamples) {
             SampleFileBuilder(
@@ -291,7 +301,7 @@ class UsageMonitoringService : Service() {
             cooldownUntilElapsedRealtime = SystemClock.elapsedRealtime() + cooldownMillis
             cooldownUntilWallClockMillis = System.currentTimeMillis() + cooldownMillis
         }
-        startListening()
+        startListening(applyStartProtection = false)
     }
 
     private fun stopAlarm() {

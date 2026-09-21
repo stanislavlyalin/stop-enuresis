@@ -4,6 +4,7 @@ import android.content.Context
 
 object AppSettings {
     const val DEFAULT_VOLUME_THRESHOLD = 75
+    const val DEFAULT_LISTENING_START_PROTECTION_HOURS = 1
     const val DEFAULT_COOLDOWN_HOURS = 2
     const val DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE = 3
     const val DEFAULT_USAGE_SAMPLE_SAVING_ENABLED = true
@@ -12,6 +13,7 @@ object AppSettings {
     private const val KEY_ABOUT_SCREEN_SEEN = "about_screen_seen"
     private const val KEY_DARK_THEME_ENABLED = "dark_theme_enabled"
     private const val KEY_VOLUME_THRESHOLD = "volume_threshold"
+    private const val KEY_LISTENING_START_PROTECTION_HOURS = "listening_start_protection_hours"
     private const val KEY_COOLDOWN_HOURS = "cooldown_hours"
     private const val KEY_ALARM_RUSTLING_DETECTIONS_PER_MINUTE =
         "alarm_rustling_detections_per_minute"
@@ -51,6 +53,22 @@ object AppSettings {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
             .putInt(KEY_VOLUME_THRESHOLD, value.coerceIn(0, 200))
+            .apply()
+    }
+
+    fun getListeningStartProtectionHours(context: Context): Int {
+        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getInt(
+                KEY_LISTENING_START_PROTECTION_HOURS,
+                DEFAULT_LISTENING_START_PROTECTION_HOURS
+            )
+            .coerceIn(0, 6)
+    }
+
+    fun setListeningStartProtectionHours(context: Context, value: Int) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putInt(KEY_LISTENING_START_PROTECTION_HOURS, value.coerceIn(0, 6))
             .apply()
     }
 

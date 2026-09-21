@@ -43,6 +43,39 @@
         </LinearLayout>
 
         <TextView
+            android:id="@+id/tvListeningStartProtectionLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Защитный интервал после начала прослушивания"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <LinearLayout
+            android:id="@+id/layoutListeningStartProtection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/seekBarListeningStartProtection"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="6"
+                android:progress="1" />
+
+            <TextView
+                android:id="@+id/tvListeningStartProtectionValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="1 час"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
+        </LinearLayout>
+
+        <TextView
             android:id="@+id/tvCooldownLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
