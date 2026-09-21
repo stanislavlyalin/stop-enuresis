@@ -24,6 +24,7 @@ import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.MainActivity
 import com.stanislavlyalin.stopenuresis.R
+import com.stanislavlyalin.stopenuresis.ui.AlarmActivity
 import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
 import com.stanislavlyalin.stopenuresis.audio.ManualWavFileWriter
 import com.stanislavlyalin.stopenuresis.audio.RecentAudioWindow
@@ -348,7 +349,7 @@ class UsageMonitoringService : Service() {
             STATE_POST_ALARM -> getString(R.string.usagePostAlarmNotificationText)
             else -> getString(R.string.usageMonitoringNotificationText)
         }
-        return NotificationCompat.Builder(this, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(
                 if (usageState == STATE_ALARMING) {
                     android.R.drawable.ic_dialog_alert
@@ -359,6 +360,7 @@ class UsageMonitoringService : Service() {
             .setContentTitle(getString(R.string.usageNotificationTitle))
             .setContentText(text)
             .setContentIntent(pendingIntent)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setOngoing(true)
             .setOnlyAlertOnce(usageState != STATE_ALARMING)
             .setPriority(
@@ -368,7 +370,21 @@ class UsageMonitoringService : Service() {
                     NotificationCompat.PRIORITY_LOW
                 }
             )
-            .build()
+        if (usageState == STATE_ALARMING) {
+            notificationBuilder.setFullScreenIntent(alarmFullScreenPendingIntent(), true)
+        }
+        return notificationBuilder.build()
+    }
+
+    private fun alarmFullScreenPendingIntent(): PendingIntent {
+        return PendingIntent.getActivity(
+            this,
+            2,
+            Intent(this, AlarmActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
     }
 
     private fun createNotificationChannel() {

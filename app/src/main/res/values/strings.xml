@@ -85,6 +85,8 @@
     <string name="startListening">Начать слушать</string>
     <string name="stopListening">Остановить</string>
     <string name="turnOffAlarm">Выключить будильник</string>
+    <string name="alarmLockScreenTitle">Будильник</string>
+    <string name="alarmLockScreenInstruction">Проведите пальцем в сторону, чтобы выключить звук</string>
     <string name="falseAlarm">Ложная тревога</string>
     <string name="success">Успех!</string>
     <string name="modelFileNotFound">Сначала обучите модель</string>
