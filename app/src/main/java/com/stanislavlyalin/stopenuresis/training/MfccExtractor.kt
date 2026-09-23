@@ -13,6 +13,7 @@ class MfccExtractor(
     private val melFilterCount: Int = 26
 ) {
     fun extractFeatures(audio: WavAudio): DoubleArray {
+        require(coefficientCount >= 2) { "At least two MFCC coefficients are required" }
         val frameSize = (audio.sampleRate * 0.025).toInt().coerceAtLeast(256)
         val hopSize = (audio.sampleRate * 0.010).toInt().coerceAtLeast(80)
         val fftSize = nextPowerOfTwo(frameSize)
@@ -24,8 +25,10 @@ class MfccExtractor(
             1 + (audio.samples.size - frameSize) / hopSize
         }
 
-        val sums = DoubleArray(coefficientCount)
-        val squareSums = DoubleArray(coefficientCount)
+        val retainedCoefficientCount = coefficientCount - 1
+        val normalizedSamples = normalizeLoudness(audio.samples)
+        val sums = DoubleArray(retainedCoefficientCount)
+        val squareSums = DoubleArray(retainedCoefficientCount)
         val real = DoubleArray(fftSize)
         val imag = DoubleArray(fftSize)
 
@@ -35,7 +38,11 @@ class MfccExtractor(
             val start = frameIndex * hopSize
             for (i in 0 until frameSize) {
                 val sampleIndex = start + i
-                val sample = if (sampleIndex < audio.samples.size) audio.samples[sampleIndex] else 0f
+                val sample = if (sampleIndex < normalizedSamples.size) {
+                    normalizedSamples[sampleIndex]
+                } else {
+                    0f
+                }
                 real[i] = sample.toDouble() * window[i]
             }
 
@@ -55,25 +62,37 @@ class MfccExtractor(
                 logMelEnergies[filterIndex] = ln(energy.coerceAtLeast(1e-12))
             }
 
-            for (coefficientIndex in 0 until coefficientCount) {
+            for (coefficientIndex in 1 until coefficientCount) {
                 var value = 0.0
                 for (filterIndex in 0 until melFilterCount) {
                     value += logMelEnergies[filterIndex] *
                         cos(PI * coefficientIndex * (filterIndex + 0.5) / melFilterCount)
                 }
-                sums[coefficientIndex] += value
-                squareSums[coefficientIndex] += value * value
+                val featureIndex = coefficientIndex - 1
+                sums[featureIndex] += value
+                squareSums[featureIndex] += value * value
             }
         }
 
-        val features = DoubleArray(coefficientCount * 2)
-        for (i in 0 until coefficientCount) {
+        val features = DoubleArray(retainedCoefficientCount * 2)
+        for (i in 0 until retainedCoefficientCount) {
             val mean = sums[i] / frameCount.toDouble()
             val variance = squareSums[i] / frameCount.toDouble() - mean * mean
             features[i] = mean
-            features[i + coefficientCount] = sqrt(variance.coerceAtLeast(0.0))
+            features[i + retainedCoefficientCount] = sqrt(variance.coerceAtLeast(0.0))
         }
         return features
+    }
+
+    private fun normalizeLoudness(samples: FloatArray): FloatArray {
+        var sumSquares = 0.0
+        for (sample in samples) sumSquares += sample * sample
+        val rms = sqrt(sumSquares / samples.size.coerceAtLeast(1))
+        if (rms < MIN_NORMALIZABLE_RMS) return samples
+
+        // Громкость уже проверена отдельным порогом, поэтому она не должна влиять на класс.
+        val gain = TARGET_RMS / rms
+        return FloatArray(samples.size) { index -> (samples[index] * gain).toFloat() }
     }
 
     private fun buildMelFilters(sampleRate: Int, fftSize: Int): Array<DoubleArray> {
@@ -173,5 +192,10 @@ class MfccExtractor(
             }
             len = len shl 1
         }
+    }
+
+    private companion object {
+        const val TARGET_RMS = 0.1
+        const val MIN_NORMALIZABLE_RMS = 1e-6
     }
 }

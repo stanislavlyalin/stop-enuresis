@@ -189,7 +189,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private fun exportModel() {
         val modelFile = AppStorage.modelFile(requireContext())
-        if (!modelFile.exists()) {
+        val modelCanBeExported = runCatching {
+            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+        }.isSuccess
+        if (!modelCanBeExported) {
             Toast.makeText(
                 requireContext(),
                 getString(R.string.modelExportNoModel),

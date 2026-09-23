@@ -2,6 +2,7 @@ package com.stanislavlyalin.stopenuresis.training
 
 import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
 import java.io.File
+import org.json.JSONObject
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -60,13 +61,10 @@ class TrainingRepository(
         )
     }
 
-    fun hasModel(): Boolean = modelFile.exists()
+    fun hasModel(): Boolean = readModel() != null
 
     fun readModelAccuracy(): Double? {
-        if (!modelFile.exists()) return null
-        return runCatching {
-            org.json.JSONObject(modelFile.readText()).optDouble("accuracy")
-        }.getOrNull()
+        return readModel()?.accuracy
     }
 
     fun train(
@@ -131,6 +129,13 @@ class TrainingRepository(
     fun saveModel(result: TrainingResult) {
         modelFile.parentFile?.mkdirs()
         modelFile.writeText(result.modelJson)
+    }
+
+    private fun readModel(): LogisticRegressionModel? {
+        if (!modelFile.exists()) return null
+        return runCatching {
+            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+        }.getOrNull()
     }
 
     fun clearDataset() {

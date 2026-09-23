@@ -16,6 +16,8 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
+import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
 
@@ -87,7 +89,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasTrainedModel(): Boolean {
-        return AppStorage.modelFile(this).exists()
+        val modelFile = AppStorage.modelFile(this)
+        if (!modelFile.exists()) return false
+        return runCatching {
+            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+        }.isSuccess
     }
 
     private fun registerSamplesChangedReceiver() {

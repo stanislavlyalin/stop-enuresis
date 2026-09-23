@@ -10,7 +10,14 @@ data class LogisticRegressionModel(
     val featureStdDevs: DoubleArray,
     val accuracy: Double
 ) {
+    init {
+        require(weights.size == FEATURE_COUNT) { "Unexpected weight count" }
+        require(featureMeans.size == FEATURE_COUNT) { "Unexpected feature mean count" }
+        require(featureStdDevs.size == FEATURE_COUNT) { "Unexpected feature standard deviation count" }
+    }
+
     fun predictProbability(features: DoubleArray): Double {
+        require(features.size == FEATURE_COUNT) { "Unexpected feature count" }
         var z = bias
         for (i in weights.indices) {
             val normalized = (features[i] - featureMeans[i]) / featureStdDevs[i]
@@ -21,8 +28,8 @@ data class LogisticRegressionModel(
 
     fun toJson(): JSONObject {
         return JSONObject()
-            .put("version", 1)
-            .put("featureType", "mfcc_mean_std")
+            .put("version", MODEL_VERSION)
+            .put("featureType", FEATURE_TYPE)
             .put("classifier", "logistic_regression")
             .put("weights", weights.toJsonArray())
             .put("bias", bias)
@@ -46,7 +53,15 @@ data class LogisticRegressionModel(
     }
 
     companion object {
+        const val FEATURE_COUNT = 24
+        private const val MODEL_VERSION = 2
+        private const val FEATURE_TYPE = "mfcc_mean_std_without_c0"
+
         fun fromJson(jsonObject: JSONObject): LogisticRegressionModel {
+            require(jsonObject.optInt("version") == MODEL_VERSION) { "Unsupported model version" }
+            require(jsonObject.optString("featureType") == FEATURE_TYPE) {
+                "Unsupported model features"
+            }
             return LogisticRegressionModel(
                 weights = jsonObject.getJSONArray("weights").toDoubleArray(),
                 bias = jsonObject.getDouble("bias"),
