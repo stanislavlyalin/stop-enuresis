@@ -23,6 +23,9 @@ import numpy as np
 COEFFICIENT_COUNT = 13
 MEL_FILTER_COUNT = 26
 CLASSIFICATION_THRESHOLD = 0.5
+MODEL_FEATURE_TYPE_V1 = "mfcc_mean_std"
+MODEL_FEATURE_TYPE_V2 = "mfcc_mean_std_without_c0"
+TARGET_RMS = 0.1
 FILENAME_RE = re.compile(r"(?P<timestamp>\d{4}\.\d{2}\.\d{2}_\d{2}\.\d{2}\.\d{2})_(?P<label>[01])(?P<unchecked>_unchecked)?\.wav$")
 
 
@@ -80,7 +83,14 @@ def mel_to_hz(mel: np.ndarray) -> np.ndarray:
     return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
 
 
-def mfcc_features(sample_rate: int, samples: np.ndarray) -> np.ndarray:
+def mfcc_features(sample_rate: int, samples: np.ndarray, feature_type: str) -> np.ndarray:
+    if feature_type == MODEL_FEATURE_TYPE_V2:
+        samples = normalize_loudness(samples)
+        coefficient_indexes = np.arange(1, COEFFICIENT_COUNT)
+    elif feature_type == MODEL_FEATURE_TYPE_V1:
+        coefficient_indexes = np.arange(COEFFICIENT_COUNT)
+    else:
+        raise ValueError(f"Неподдерживаемый тип признаков: {feature_type}")
     frame_size = max(int(sample_rate * 0.025), 256)
     hop_size = max(int(sample_rate * 0.010), 80)
     fft_size = 1 << (frame_size - 1).bit_length()
@@ -94,11 +104,16 @@ def mfcc_features(sample_rate: int, samples: np.ndarray) -> np.ndarray:
         frames = np.lib.stride_tricks.sliding_window_view(samples, frame_size)[::hop_size]
     spectrum = np.abs(np.fft.rfft(frames * window, n=fft_size, axis=1)) ** 2
     log_mel = np.log(np.maximum(spectrum @ filters.T, 1e-12))
-    dct = np.cos(
-        np.pi * np.arange(COEFFICIENT_COUNT)[:, None] * filter_indexes / MEL_FILTER_COUNT
-    )
+    dct = np.cos(np.pi * coefficient_indexes[:, None] * filter_indexes / MEL_FILTER_COUNT)
     coefficients = log_mel @ dct.T
     return np.concatenate((coefficients.mean(axis=0), coefficients.std(axis=0)))
+
+
+def normalize_loudness(samples: np.ndarray) -> np.ndarray:
+    rms = float(np.sqrt(np.mean(samples * samples))) if len(samples) else 0.0
+    if rms < 1e-6:
+        return samples
+    return samples * (TARGET_RMS / rms)
 
 
 def average_smoothed_absolute(samples: np.ndarray, sample_rate: int) -> float:
@@ -122,13 +137,16 @@ def load_samples(model: dict[str, object], samples_dir: Path) -> list[Sample]:
     means = np.asarray(model["featureMeans"], dtype=float)
     std_devs = np.asarray(model["featureStdDevs"], dtype=float)
     bias = float(model["bias"])
+    feature_type = str(model.get("featureType", MODEL_FEATURE_TYPE_V1))
     samples: list[Sample] = []
     for path in sorted(samples_dir.glob("*.wav")):
         match = FILENAME_RE.fullmatch(path.name)
         if not match:
             continue
         sample_rate, audio = read_wav(path)
-        features = mfcc_features(sample_rate, audio)
+        features = mfcc_features(sample_rate, audio, feature_type)
+        if len(features) != len(weights):
+            raise ValueError(f"{path.name}: размер признаков не совпадает с моделью")
         normalized = (features - means) / std_devs
         contributions = weights * normalized
         probability = sigmoid(bias + contributions.sum())
@@ -202,7 +220,11 @@ def plot(samples: list[Sample], output: Path) -> None:
     features = np.stack([sample.features for sample in labels])
     correlation = np.corrcoef(features, rowvar=False)
     image = axes[1].imshow(correlation, vmin=-1, vmax=1, cmap="coolwarm")
-    axes[1].set(title="Корреляция 26 MFCC-признаков", xlabel="Номер признака", ylabel="Номер признака")
+    axes[1].set(
+        title=f"Корреляция {features.shape[1]} MFCC-признаков",
+        xlabel="Номер признака",
+        ylabel="Номер признака",
+    )
     fig.colorbar(image, ax=axes[1], label="Корреляция")
     fig.savefig(output / "overview.png", dpi=160)
     plt.close(fig)
