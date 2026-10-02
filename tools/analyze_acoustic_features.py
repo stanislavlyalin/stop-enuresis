@@ -2,7 +2,7 @@
 """Сравнивает акустические признаки и классификаторы для "Стоп Энурез".
 
 Скрипт читает WAV-файлы, сохранённые приложением. Размеченные файлы участвуют
-в обучении и групповой проверке по датам, а неразмеченные остаются внешней
+в обучении и групповой проверке по ночам, а неразмеченные остаются внешней
 проверкой. Это не позволяет пятисекундным фрагментам одной ночи попадать и в
 обучение, и в проверку.
 """
@@ -15,6 +15,7 @@ import json
 import re
 import wave
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -57,8 +58,21 @@ FILENAME_RE = re.compile(
 class AudioFile:
     path: Path
     date: str
+    time: str
     label: int
     unchecked: bool
+
+    @property
+    def night_group(self) -> str:
+        """Относит запись после 18:00 к следующей ночи.
+
+        Иначе фрагменты 23:xx и 00:xx одной ночи могли бы оказаться в разных
+        частях проверки и искусственно улучшить метрику.
+        """
+        if int(self.time[:2]) < 18:
+            return self.date
+        date = datetime.strptime(self.date, "%Y.%m.%d") + timedelta(days=1)
+        return date.strftime("%Y.%m.%d")
 
 
 def parse_args() -> argparse.Namespace:
@@ -241,6 +255,7 @@ def load_files(samples_dir: Path) -> list[AudioFile]:
                 AudioFile(
                     path=path,
                     date=match.group("date"),
+                    time=match.group("time"),
                     label=int(match.group("label")),
                     unchecked=match.group("unchecked") is not None,
                 )
@@ -406,7 +421,7 @@ def write_report(
         "",
         f"- Размечено: {len(y)} файлов - {positives} ёрзаний и {negatives} файлов класса 'тишина/посторонний звук'.",
         f"- Рассчитано {len(names)} признаков на всех {len(files)} файлах. Громкость `raw_rms_diagnostic` сохранена только для диагностики и не подаётся моделям.",
-        "- Проверка: `StratifiedGroupKFold`, 5 частей, группа - календарная дата. Записи одной ночи не разделяются между обучением и проверкой.",
+        "- Проверка: `StratifiedGroupKFold`, 5 частей, группа - ночь. Записи после 18:00 относятся к следующей дате, поэтому фрагменты одной ночи не разделяются между обучением и проверкой.",
         f"- Последние 5 неразмеченных файлов {alarm_date} - известный будильник. Они не использованы при обучении и служат внешней проверкой ложных срабатываний.",
         "",
         "## Сравнение алгоритмов",
@@ -472,7 +487,7 @@ def main() -> None:
     labeled = [files[index] for index in labeled_indexes]
     unchecked = [files[index] for index in unchecked_indexes]
     y = np.asarray([item.label for item in labeled])
-    groups = np.asarray([item.date for item in labeled])
+    groups = np.asarray([item.night_group for item in labeled])
     usable = np.asarray([name != "raw_rms_diagnostic" for name in names])
     X = X_labeled[:, usable]
     usable_names = list(np.asarray(names)[usable])
@@ -505,6 +520,7 @@ def main() -> None:
         {
             "file": audio_file.path.name,
             "date": audio_file.date,
+            "night_group": audio_file.night_group,
             "label": audio_file.label if not audio_file.unchecked else "unchecked",
             **dict(zip(names, row)),
         }
