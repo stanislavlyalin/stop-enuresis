@@ -366,7 +366,7 @@ class UsageMonitoringService : Service() {
             .setContentText(text)
             .setContentIntent(pendingIntent)
             .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setOngoing(true)
+            .setOngoing(usageState != STATE_ALARMING)
             .setOnlyAlertOnce(usageState != STATE_ALARMING)
             .setPriority(
                 if (usageState == STATE_ALARMING) {
@@ -376,7 +376,14 @@ class UsageMonitoringService : Service() {
                 }
             )
         if (usageState == STATE_ALARMING) {
-            notificationBuilder.setFullScreenIntent(alarmFullScreenPendingIntent(), true)
+            notificationBuilder
+                .setFullScreenIntent(alarmFullScreenPendingIntent(), true)
+                .setDeleteIntent(alarmStopPendingIntent())
+                .addAction(
+                    R.drawable.ic_stop_24,
+                    getString(R.string.turnOffAlarm),
+                    alarmStopPendingIntent()
+                )
         }
         return notificationBuilder.build()
     }
@@ -387,6 +394,17 @@ class UsageMonitoringService : Service() {
             2,
             Intent(this, AlarmActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            },
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+    }
+
+    private fun alarmStopPendingIntent(): PendingIntent {
+        return PendingIntent.getService(
+            this,
+            3,
+            Intent(this, UsageMonitoringService::class.java).apply {
+                action = ACTION_TURN_OFF_ALARM
             },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )

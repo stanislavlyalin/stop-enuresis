@@ -102,6 +102,6 @@
     <string name="usageNotificationChannel">Запуск</string>
     <string name="usageNotificationTitle">Мониторинг</string>
     <string name="usageMonitoringNotificationText">Приложение слушает микрофон</string>
-    <string name="usageAlarmNotificationText">Сработал будильник. Разблокируйте телефон, чтобы выключить.</string>
+    <string name="usageAlarmNotificationText">Сработал будильник. Смахните уведомление либо нажмите кнопку выключения.</string>
     <string name="usagePostAlarmNotificationText">Выберите результат срабатывания</string>
 </resources>
