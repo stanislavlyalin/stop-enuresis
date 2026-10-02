@@ -58,6 +58,7 @@ class UsageMonitoringService : Service() {
     @Volatile
     private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
+    private var sampleSavingAllowedAfterElapsedRealtime = 0L
 
     private val detectionStatusTick = object : Runnable {
         override fun run() {
@@ -161,9 +162,11 @@ class UsageMonitoringService : Service() {
             if (protectionMillis > 0L) {
                 cooldownUntilElapsedRealtime = SystemClock.elapsedRealtime() + protectionMillis
                 cooldownUntilWallClockMillis = System.currentTimeMillis() + protectionMillis
+                sampleSavingAllowedAfterElapsedRealtime = cooldownUntilElapsedRealtime
             } else {
                 cooldownUntilElapsedRealtime = 0L
                 cooldownUntilWallClockMillis = 0L
+                sampleSavingAllowedAfterElapsedRealtime = 0L
             }
         }
         AppStorage.migrateLegacyData(this)
@@ -205,7 +208,9 @@ class UsageMonitoringService : Service() {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
-                sampleFileBuilder?.addSamples(buffer, readCount)
+                if (SystemClock.elapsedRealtime() >= sampleSavingAllowedAfterElapsedRealtime) {
+                    sampleFileBuilder?.addSamples(buffer, readCount)
+                }
                 recentAudioWindow.append(buffer, readCount)
                 samplesSinceLastClassification =
                     (samplesSinceLastClassification + readCount).coerceAtMost(FRAGMENT_SIZE_SAMPLES)
