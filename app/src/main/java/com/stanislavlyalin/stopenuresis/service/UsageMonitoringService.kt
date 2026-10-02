@@ -29,8 +29,8 @@ import com.stanislavlyalin.stopenuresis.audio.AudioEnvelope
 import com.stanislavlyalin.stopenuresis.audio.ManualWavFileWriter
 import com.stanislavlyalin.stopenuresis.audio.RecentAudioWindow
 import com.stanislavlyalin.stopenuresis.audio.SampleFileBuilder
-import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
-import com.stanislavlyalin.stopenuresis.training.MfccExtractor
+import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
+import com.stanislavlyalin.stopenuresis.training.AcousticFeatureExtractor
 import com.stanislavlyalin.stopenuresis.training.WavAudio
 import org.json.JSONObject
 import java.io.File
@@ -45,7 +45,7 @@ class UsageMonitoringService : Service() {
 
     private val isListening = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val mfccExtractor = MfccExtractor()
+    private val acousticFeatureExtractor = AcousticFeatureExtractor()
 
     private var usageState = STATE_IDLE
     private var audioRecord: AudioRecord? = null
@@ -415,11 +415,11 @@ class UsageMonitoringService : Service() {
         return SystemClock.elapsedRealtime() >= cooldownUntilElapsedRealtime
     }
 
-    private fun isRustling(model: LogisticRegressionModel, pcm16MonoSamples: ShortArray): Boolean {
+    private fun isRustling(model: ExtraTreesModel, pcm16MonoSamples: ShortArray): Boolean {
         val floatSamples = FloatArray(pcm16MonoSamples.size) { index ->
             pcm16MonoSamples[index].toFloat() / Short.MAX_VALUE.toFloat()
         }
-        val features = mfccExtractor.extractFeatures(
+        val features = acousticFeatureExtractor.extractFeatures(
             WavAudio(
                 sampleRate = SAMPLE_RATE,
                 samples = floatSamples
@@ -464,9 +464,9 @@ class UsageMonitoringService : Service() {
         }
     }
 
-    private fun loadModel(): LogisticRegressionModel? {
+    private fun loadModel(): ExtraTreesModel? {
         return runCatching {
-            LogisticRegressionModel.fromJson(JSONObject(modelFile().readText()))
+            ExtraTreesModel.fromJson(JSONObject(modelFile().readText()))
         }.getOrNull()
     }
 

@@ -17,7 +17,7 @@ import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.BuildConfig
 import com.stanislavlyalin.stopenuresis.R
-import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
+import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
 import org.json.JSONObject
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -190,7 +190,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private fun exportModel() {
         val modelFile = AppStorage.modelFile(requireContext())
         val modelCanBeExported = runCatching {
-            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+            ExtraTreesModel.fromJson(JSONObject(modelFile.readText()))
         }.isSuccess
         if (!modelCanBeExported) {
             Toast.makeText(
@@ -230,7 +230,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 ?.bufferedReader()
                 ?.use { it.readText() }
                 ?: error("Cannot open model file")
-            LogisticRegressionModel.fromJson(JSONObject(jsonText))
+            ExtraTreesModel.fromJson(JSONObject(jsonText))
 
             val modelFile = AppStorage.modelFile(requireContext())
             modelFile.parentFile?.mkdirs()

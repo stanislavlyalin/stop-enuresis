@@ -28,8 +28,8 @@ class TrainingRepository(
     private val samplesDir: File,
     private val modelFile: File
 ) {
-    private val mfccExtractor = MfccExtractor()
-    private val trainer = LogisticRegressionTrainer()
+    private val acousticFeatureExtractor = AcousticFeatureExtractor()
+    private val trainer = ExtraTreesTrainer()
     private val sampleLevelCache = mutableMapOf<String, CachedSampleLevel>()
 
     fun getDatasetStats(): TrainingDatasetStats {
@@ -101,7 +101,7 @@ class TrainingRepository(
         var processedFeatureFiles = 0
 
         fun extractFeatures(file: File): DoubleArray {
-            val features = mfccExtractor.extractFeatures(WavReader.readPcm16Mono(file))
+            val features = acousticFeatureExtractor.extractFeatures(WavReader.readPcm16Mono(file))
             processedFeatureFiles++
             onProgress(TrainingProgress(processedFeatureFiles, totalFeatureFiles))
             return features
@@ -131,10 +131,10 @@ class TrainingRepository(
         modelFile.writeText(result.modelJson)
     }
 
-    private fun readModel(): LogisticRegressionModel? {
+    private fun readModel(): ExtraTreesModel? {
         if (!modelFile.exists()) return null
         return runCatching {
-            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+            ExtraTreesModel.fromJson(JSONObject(modelFile.readText()))
         }.getOrNull()
     }
 
@@ -153,7 +153,7 @@ class TrainingRepository(
     private fun getLabel(file: File): Int? {
         val name = file.name
         return when {
-            name.endsWith("_1.wav") || name.endsWith("_1_unchecked.wav") -> 1
+            name.endsWith("_1.wav") -> 1
             name.endsWith("_0.wav") -> 0
             else -> null
         }

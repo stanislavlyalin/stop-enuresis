@@ -16,7 +16,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
-import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
+import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
 import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         val modelFile = AppStorage.modelFile(this)
         if (!modelFile.exists()) return false
         return runCatching {
-            LogisticRegressionModel.fromJson(JSONObject(modelFile.readText()))
+            ExtraTreesModel.fromJson(JSONObject(modelFile.readText()))
         }.isSuccess
     }
 

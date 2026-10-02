@@ -35,8 +35,8 @@ import com.stanislavlyalin.stopenuresis.AppSettings
 import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.service.UsageMonitoringService
-import com.stanislavlyalin.stopenuresis.training.LogisticRegressionModel
-import com.stanislavlyalin.stopenuresis.training.MfccExtractor
+import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
+import com.stanislavlyalin.stopenuresis.training.AcousticFeatureExtractor
 import com.stanislavlyalin.stopenuresis.training.WavAudio
 import com.stanislavlyalin.stopenuresis.audio.StreamingMovingAverageSmoother
 import org.json.JSONObject
@@ -60,7 +60,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private val isListening = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val mfccExtractor = MfccExtractor()
+    private val acousticFeatureExtractor = AcousticFeatureExtractor()
 
     private var usageState = UsageState.IDLE
     private var audioRecord: AudioRecord? = null
@@ -395,11 +395,11 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         return SystemClock.elapsedRealtime() >= cooldownUntilElapsedRealtime
     }
 
-    private fun isRustling(model: LogisticRegressionModel, pcm16MonoSamples: ShortArray): Boolean {
+    private fun isRustling(model: ExtraTreesModel, pcm16MonoSamples: ShortArray): Boolean {
         val floatSamples = FloatArray(pcm16MonoSamples.size) { index ->
             pcm16MonoSamples[index].toFloat() / Short.MAX_VALUE.toFloat()
         }
-        val features = mfccExtractor.extractFeatures(
+        val features = acousticFeatureExtractor.extractFeatures(
             WavAudio(
                 sampleRate = SAMPLE_RATE,
                 samples = floatSamples
@@ -408,9 +408,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         return model.predictProbability(features) >= CLASSIFICATION_THRESHOLD
     }
 
-    private fun loadModel(): LogisticRegressionModel? {
+    private fun loadModel(): ExtraTreesModel? {
         return runCatching {
-            LogisticRegressionModel.fromJson(JSONObject(modelFile().readText()))
+            ExtraTreesModel.fromJson(JSONObject(modelFile().readText()))
         }.getOrNull()
     }
 
