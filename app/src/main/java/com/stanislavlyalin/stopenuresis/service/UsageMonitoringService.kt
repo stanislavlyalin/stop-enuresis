@@ -208,40 +208,42 @@ class UsageMonitoringService : Service() {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
-                if (SystemClock.elapsedRealtime() >= sampleSavingAllowedAfterElapsedRealtime) {
-                    sampleFileBuilder?.addSamples(buffer, readCount)
-                }
                 recentAudioWindow.append(buffer, readCount)
                 samplesSinceLastClassification =
                     (samplesSinceLastClassification + readCount).coerceAtMost(FRAGMENT_SIZE_SAMPLES)
+                var classifierDetected = false
 
-                if (!recentAudioWindow.isFull) continue
+                if (recentAudioWindow.isFull) {
+                    val fragment = recentAudioWindow.copySamples()
+                    val shouldClassify =
+                        AudioEnvelope.averageSmoothedAbsolute(
+                            input = fragment,
+                            sampleRate = SAMPLE_RATE
+                        ) >= volumeThreshold
 
-                val fragment = recentAudioWindow.copySamples()
-                val shouldClassify =
-                    AudioEnvelope.averageSmoothedAbsolute(
-                        input = fragment,
-                        sampleRate = SAMPLE_RATE
-                    ) >= volumeThreshold
-
-                if (shouldClassify && samplesSinceLastClassification >= FRAGMENT_SIZE_SAMPLES) {
-                    samplesSinceLastClassification = 0
-                    if (
-                        !alarmTriggerPosted &&
-                        canTriggerAlarm() &&
-                        isRustling(model, fragment)
-                    ) {
-                        val now = SystemClock.elapsedRealtime()
-                        addRustlingDetection(now)
-                        broadcastStatus()
-                        if (getRustlingDetectionCount() < requiredRustlingDetectionsPerMinute) {
-                            continue
-                        }
-                        alarmTriggerPosted = true
-                        mainHandler.post {
-                            if (usageState == STATE_MONITORING) triggerAlarm()
+                    if (shouldClassify && samplesSinceLastClassification >= FRAGMENT_SIZE_SAMPLES) {
+                        samplesSinceLastClassification = 0
+                        if (
+                            !alarmTriggerPosted &&
+                            canTriggerAlarm() &&
+                            isRustling(model, fragment)
+                        ) {
+                            classifierDetected = true
+                            val now = SystemClock.elapsedRealtime()
+                            addRustlingDetection(now)
+                            broadcastStatus()
+                            if (getRustlingDetectionCount() >= requiredRustlingDetectionsPerMinute) {
+                                alarmTriggerPosted = true
+                                mainHandler.post {
+                                    if (usageState == STATE_MONITORING) triggerAlarm()
+                                }
+                            }
                         }
                     }
+                }
+
+                if (SystemClock.elapsedRealtime() >= sampleSavingAllowedAfterElapsedRealtime) {
+                    sampleFileBuilder?.addSamples(buffer, readCount, classifierDetected)
                 }
             }
         }

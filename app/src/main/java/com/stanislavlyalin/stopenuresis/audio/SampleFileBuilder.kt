@@ -45,7 +45,8 @@ class SampleFileBuilder(
 
     fun addSamples(
         pcm16MonoSamples: ShortArray,
-        readCount: Int
+        readCount: Int,
+        classifierDetected: Boolean = false
     ) {
         if (readCount <= 0) return
         require(readCount <= pcm16MonoSamples.size) {
@@ -59,11 +60,11 @@ class SampleFileBuilder(
             (samplesSinceLastSilenceDecision + readCount).coerceAtMost(fragmentSizeSamples)
 
         if (recentAudioWindow.isFull) {
-            handleCurrentFragment()
+            handleCurrentFragment(classifierDetected)
         }
     }
 
-    private fun handleCurrentFragment() {
+    private fun handleCurrentFragment(classifierDetected: Boolean) {
         val fragment = recentAudioWindow.copySamples()
         val averageEnvelope = AudioEnvelope.averageSmoothedAbsolute(
             input = fragment,
@@ -77,7 +78,8 @@ class SampleFileBuilder(
                 dispatchWrite(
                     pcm16MonoSamples = fragment,
                     classLabel = 1,
-                    unchecked = true
+                    unchecked = true,
+                    classifierDetected = classifierDetected
                 )
                 samplesSinceLastRustlingWrite = 0
             }
@@ -102,11 +104,12 @@ class SampleFileBuilder(
     private fun dispatchWrite(
         pcm16MonoSamples: ShortArray,
         classLabel: Int,
-        unchecked: Boolean
+        unchecked: Boolean,
+        classifierDetected: Boolean = false
     ) {
         if (pcm16MonoSamples.isEmpty()) return
 
-        val fileName = buildFileName(classLabel, unchecked)
+        val fileName = buildFileName(classLabel, unchecked, classifierDetected)
         val outputFile = File(samplesDir, fileName)
 
         thread(
@@ -123,11 +126,16 @@ class SampleFileBuilder(
         }
     }
 
-    private fun buildFileName(classLabel: Int, unchecked: Boolean): String {
+    private fun buildFileName(
+        classLabel: Int,
+        unchecked: Boolean,
+        classifierDetected: Boolean
+    ): String {
         val formatter = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss", Locale.getDefault())
         val timestamp = formatter.format(Date())
+        val classifierSuffix = if (unchecked && classifierDetected) "_detected" else ""
         val suffix = if (unchecked) "_unchecked" else ""
-        return "${timestamp}_${classLabel}${suffix}.wav"
+        return "${timestamp}_${classLabel}${classifierSuffix}${suffix}.wav"
     }
 
     private companion object {

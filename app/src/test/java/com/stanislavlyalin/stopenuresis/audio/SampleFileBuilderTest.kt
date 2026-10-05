@@ -89,9 +89,35 @@ class SampleFileBuilderTest {
         assertEquals(0, writer.writtenSamples.size)
     }
 
+    @Test
+    fun addSamplesMarksUncheckedFileWhenClassifierDetectedRustling() {
+        val writer = CapturingWavFileWriter()
+        val firstWrite = CountDownLatch(1)
+        val builder = SampleFileBuilder(
+            fragmentSizeSamples = 10,
+            sampleRate = 10,
+            channelCount = 1,
+            bitsPerSample = 16,
+            samplesDir = temporaryFolder.newFolder(),
+            wavFileWriter = writer,
+            onSampleFileWritten = { firstWrite.countDown() }
+        )
+        builder.setThreshold(40f)
+
+        builder.addSamples(
+            pcm16MonoSamples = ShortArray(10) { 100 },
+            readCount = 10,
+            classifierDetected = true
+        )
+
+        assertTrue(firstWrite.await(2, TimeUnit.SECONDS))
+        assertTrue(writer.outputFiles.single().name.endsWith("_1_detected_unchecked.wav"))
+    }
+
     private class CapturingWavFileWriter : WavFileWriter {
 
         val writtenSamples = CopyOnWriteArrayList<ShortArray>()
+        val outputFiles = CopyOnWriteArrayList<File>()
 
         override fun writeWav(
             outputFile: File,
@@ -99,6 +125,7 @@ class SampleFileBuilderTest {
             sampleRate: Int
         ) {
             writtenSamples.add(pcm16MonoSamples.copyOf())
+            outputFiles.add(outputFile)
         }
     }
 }

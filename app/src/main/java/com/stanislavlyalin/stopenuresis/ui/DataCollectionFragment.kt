@@ -604,7 +604,10 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun parseUncheckedSampleDate(file: File): Date? {
-        val timestamp = file.name.removeSuffix(UNCHECKED_RUSTLING_SUFFIX)
+        val timestamp = file.name
+            .removeSuffix(UNCHECKED_RUSTLING_SUFFIX)
+            .removeSuffix("_detected")
+            .removeSuffix("_1")
         if (timestamp == file.name) return null
         return runCatching {
             sampleFileDateFormat.parse(timestamp)

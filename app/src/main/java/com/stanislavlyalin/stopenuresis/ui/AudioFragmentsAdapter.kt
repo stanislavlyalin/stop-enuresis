@@ -1,11 +1,13 @@
 package com.stanislavlyalin.stopenuresis.ui
 
+import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import androidx.core.content.ContextCompat
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.audio.AudioFragmentAnalyzer
 import com.stanislavlyalin.stopenuresis.audio.AudioFragmentInfo
@@ -72,6 +74,13 @@ class AudioFragmentsAdapter(
             val audioInfo = getAudioInfo(file)
 
             tvFileName.text = formatDisplayName(file)
+            if (file.name.endsWith(CLASSIFIER_DETECTED_SUFFIX)) {
+                tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.rustling))
+                tvFileName.setTypeface(null, Typeface.BOLD)
+            } else {
+                tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.black))
+                tvFileName.setTypeface(null, Typeface.NORMAL)
+            }
             tvAverageAmplitude.text = audioInfo.averageAmplitude.toString()
             waveformView.setWaveform(audioInfo.waveform)
             waveformView.setProgress(if (isPlaying) playbackProgress else 0f)
@@ -116,6 +125,7 @@ class AudioFragmentsAdapter(
     private fun formatDisplayName(file: File): String {
         val timestamp = file.name.substringBeforeLast(".wav")
             .removeSuffix("_unchecked")
+            .removeSuffix("_detected")
             .removeSuffix("_1")
             .removeSuffix("_0")
 
@@ -131,4 +141,8 @@ class AudioFragmentsAdapter(
         val lastModified: Long,
         val info: AudioFragmentInfo
     )
+
+    private companion object {
+        const val CLASSIFIER_DETECTED_SUFFIX = "_1_detected_unchecked.wav"
+    }
 }

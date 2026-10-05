@@ -81,7 +81,7 @@
         android:layout_marginEnd="2dp"
         android:text="@string/rustlingCounterInitial"
         android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="#C62828"
+        android:textColor="@color/rustling"
         android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/seekBarThreshold"
         app:layout_constraintEnd_toStartOf="@id/btnClearPendingSamples"
