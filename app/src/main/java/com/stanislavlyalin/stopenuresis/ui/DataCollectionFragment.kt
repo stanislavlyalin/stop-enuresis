@@ -142,6 +142,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         const val PLAYBACK_GAIN_MILLIBELS = 954
         const val SAMPLE_FILE_DATE_FORMAT = "yyyy.MM.dd_HH.mm.ss"
         const val UNCHECKED_RUSTLING_SUFFIX = "_1_unchecked.wav"
+        const val DETECTED_UNCHECKED_RUSTLING_SUFFIX = "_1_detected_unchecked.wav"
         const val SILENCE_SUFFIX = "_0.wav"
         const val RUSTLING_SUFFIX = "_1.wav"
     }
@@ -359,7 +360,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun deleteAudioFragment(file: File) {
         stopPlayback()
-        val wasUnchecked = file.name.endsWith(UNCHECKED_RUSTLING_SUFFIX)
+        val wasUnchecked = isUncheckedRustlingFile(file)
         val deleted = file.exists() && file.delete()
 
         if (deleted && wasUnchecked) {
@@ -410,7 +411,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun saveUncheckedAudioFragmentAs(file: File, classLabel: Int): Boolean {
-        if (!file.name.endsWith(UNCHECKED_RUSTLING_SUFFIX)) return false
+        if (!isUncheckedRustlingFile(file)) return false
         if (!file.exists()) return false
 
         val labeledFile = buildLabeledFileForUnchecked(file, classLabel)
@@ -432,7 +433,9 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             0 -> SILENCE_SUFFIX
             else -> RUSTLING_SUFFIX
         }
-        val baseName = file.name.replace(UNCHECKED_RUSTLING_SUFFIX, targetSuffix)
+        val baseName = file.name
+            .removeSuffix(DETECTED_UNCHECKED_RUSTLING_SUFFIX)
+            .removeSuffix(UNCHECKED_RUSTLING_SUFFIX) + targetSuffix
         var labeledFile = File(file.parentFile, baseName)
         var duplicateIndex = 1
 
@@ -593,7 +596,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         samplesDir.mkdirs()
         return samplesDir
             .listFiles { file ->
-                file.isFile && file.name.endsWith(UNCHECKED_RUSTLING_SUFFIX)
+                file.isFile && isUncheckedRustlingFile(file)
             }
             ?.sortedByDescending { file -> sampleSortTime(file) }
             .orEmpty()
@@ -605,13 +608,18 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     private fun parseUncheckedSampleDate(file: File): Date? {
         val timestamp = file.name
+            .removeSuffix(DETECTED_UNCHECKED_RUSTLING_SUFFIX)
             .removeSuffix(UNCHECKED_RUSTLING_SUFFIX)
-            .removeSuffix("_detected")
             .removeSuffix("_1")
         if (timestamp == file.name) return null
         return runCatching {
             sampleFileDateFormat.parse(timestamp)
         }.getOrNull()
+    }
+
+    private fun isUncheckedRustlingFile(file: File): Boolean {
+        return file.name.endsWith(UNCHECKED_RUSTLING_SUFFIX) ||
+            file.name.endsWith(DETECTED_UNCHECKED_RUSTLING_SUFFIX)
     }
 
     private fun resetSampleCounters() {
