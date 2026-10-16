@@ -109,15 +109,15 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/tvAlarmRustlingDetectionsPerMinuteLabel"
+            android:id="@+id/tvAlarmRustlingEpisodesLabel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
-            android:text="@string/alarmRustlingDetectionsPerMinute"
+            android:text="@string/alarmRustlingEpisodes"
             android:textAppearance="?attr/textAppearanceTitleMedium" />
 
         <LinearLayout
-            android:id="@+id/layoutAlarmRustlingDetectionsPerMinute"
+            android:id="@+id/layoutAlarmRustlingEpisodes"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
@@ -125,7 +125,7 @@
             android:orientation="horizontal">
 
             <SeekBar
-                android:id="@+id/seekBarAlarmRustlingDetectionsPerMinute"
+                android:id="@+id/seekBarAlarmRustlingEpisodes"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
@@ -133,12 +133,44 @@
                 android:progress="2" />
 
             <TextView
-                android:id="@+id/tvAlarmRustlingDetectionsPerMinuteValue"
+                android:id="@+id/tvAlarmRustlingEpisodesValue"
                 android:layout_width="56dp"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:gravity="end"
                 android:text="3"
+                android:textAppearance="?attr/textAppearanceBodyLarge" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="@string/confirmationPeriod"
+            android:textAppearance="?attr/textAppearanceTitleMedium" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <SeekBar
+                android:id="@+id/seekBarConfirmationPeriod"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="9"
+                android:progress="1" />
+
+            <TextView
+                android:id="@+id/tvConfirmationPeriodValue"
+                android:layout_width="56dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:gravity="end"
+                android:text="2 мин"
                 android:textAppearance="?attr/textAppearanceBodyLarge" />
         </LinearLayout>
 

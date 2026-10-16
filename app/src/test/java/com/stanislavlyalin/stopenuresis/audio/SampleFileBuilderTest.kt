@@ -90,7 +90,7 @@ class SampleFileBuilderTest {
     }
 
     @Test
-    fun addSamplesMarksUncheckedFileWhenClassifierDetectedRustling() {
+    fun savesExactClassifiedWindowWithDetectedLabel() {
         val writer = CapturingWavFileWriter()
         val firstWrite = CountDownLatch(1)
         val builder = SampleFileBuilder(
@@ -104,14 +104,12 @@ class SampleFileBuilderTest {
         )
         builder.setThreshold(40f)
 
-        builder.addSamples(
-            pcm16MonoSamples = ShortArray(10) { 100 },
-            readCount = 10,
-            classifierDetected = true
-        )
+        val classifiedWindow = ShortArray(10) { (it + 1).toShort() }
+        builder.saveDetectedWindow(classifiedWindow)
 
         assertTrue(firstWrite.await(2, TimeUnit.SECONDS))
         assertTrue(writer.outputFiles.single().name.endsWith("_1_detected_unchecked.wav"))
+        assertTrue(writer.writtenSamples.single().contentEquals(classifiedWindow))
     }
 
     private class CapturingWavFileWriter : WavFileWriter {

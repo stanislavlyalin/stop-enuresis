@@ -69,10 +69,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     @Volatile
     private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
-    private var rustlingDetectionCount = 0
-    private var requiredRustlingDetectionsPerMinute =
-        AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
-    private var displayedRustlingDetectionSlots = 0
+    private var rustlingEpisodeCount = 0
+    private var requiredRustlingEpisodes = AppSettings.DEFAULT_ALARM_RUSTLING_EPISODES
+    private var displayedRustlingEpisodeSlots = 0
 
     private val usageStatusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -81,13 +80,13 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
                 UsageMonitoringService.EXTRA_COOLDOWN_UNTIL_WALL_CLOCK,
                 0L
             )
-            rustlingDetectionCount = intent.getIntExtra(
-                UsageMonitoringService.EXTRA_RUSTLING_DETECTION_COUNT,
+            rustlingEpisodeCount = intent.getIntExtra(
+                UsageMonitoringService.EXTRA_RUSTLING_EPISODE_COUNT,
                 0
             )
-            requiredRustlingDetectionsPerMinute = intent.getIntExtra(
-                UsageMonitoringService.EXTRA_REQUIRED_RUSTLING_DETECTIONS_PER_MINUTE,
-                AppSettings.DEFAULT_ALARM_RUSTLING_DETECTIONS_PER_MINUTE
+            requiredRustlingEpisodes = intent.getIntExtra(
+                UsageMonitoringService.EXTRA_REQUIRED_RUSTLING_EPISODES,
+                AppSettings.DEFAULT_ALARM_RUSTLING_EPISODES
             )
             setUsageState(stateFromService(intent.getStringExtra(UsageMonitoringService.EXTRA_STATE)))
             updateRustlingDetectionIndicator()
@@ -211,9 +210,8 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
 
         setUsageState(UsageState.MONITORING)
-        rustlingDetectionCount = 0
-        requiredRustlingDetectionsPerMinute =
-            AppSettings.getAlarmRustlingDetectionsPerMinute(requireContext())
+        rustlingEpisodeCount = 0
+        requiredRustlingEpisodes = AppSettings.getAlarmRustlingEpisodes(requireContext())
         updateRustlingDetectionIndicator()
         UsageMonitoringService.start(requireContext())
     }
@@ -293,9 +291,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private fun updateRustlingDetectionIndicator() {
         if (!::layoutRustlingDetections.isInitialized) return
 
-        val requiredCount = requiredRustlingDetectionsPerMinute.coerceAtLeast(1)
-        val activeCount = rustlingDetectionCount.coerceIn(0, requiredCount)
-        if (displayedRustlingDetectionSlots != requiredCount) {
+        val requiredCount = requiredRustlingEpisodes.coerceAtLeast(1)
+        val activeCount = rustlingEpisodeCount.coerceIn(0, requiredCount)
+        if (displayedRustlingEpisodeSlots != requiredCount) {
             rebuildRustlingDetectionIndicator(requiredCount)
         }
 
@@ -315,7 +313,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private fun rebuildRustlingDetectionIndicator(requiredCount: Int) {
         layoutRustlingDetections.removeAllViews()
-        displayedRustlingDetectionSlots = requiredCount
+        displayedRustlingEpisodeSlots = requiredCount
 
         repeat(requiredCount) {
             layoutRustlingDetections.addView(
@@ -370,9 +368,8 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private fun syncUsageStateFromService() {
         cooldownUntilWallClockMillis = UsageMonitoringService.cooldownUntilWallClockSnapshot
-        rustlingDetectionCount = UsageMonitoringService.rustlingDetectionCountSnapshot
-        requiredRustlingDetectionsPerMinute =
-            UsageMonitoringService.requiredRustlingDetectionsPerMinuteSnapshot
+        rustlingEpisodeCount = UsageMonitoringService.rustlingEpisodeCountSnapshot
+        requiredRustlingEpisodes = UsageMonitoringService.requiredRustlingEpisodesSnapshot
         setUsageState(stateFromService(UsageMonitoringService.stateSnapshot))
         updateRustlingDetectionIndicator()
         if (cooldownUntilWallClockMillis > 0L) {

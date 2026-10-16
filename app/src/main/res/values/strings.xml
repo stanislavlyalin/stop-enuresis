@@ -41,7 +41,9 @@
     <string name="noAccessToMicrophone">Нет доступа к микрофону</string>
     <string name="audioRecordingSettingsError">Ошибка параметров аудиозаписи</string>
     <string name="audioRecordNotInitialized">AudioRecord не инициализирован</string>
-    <string name="alarmRustlingDetectionsPerMinute">Число срабатываний детектора в минуту для активации будильника</string>
+    <string name="alarmRustlingEpisodes">Число отдельных эпизодов ёрзания за период для включения будильника</string>
+    <string name="confirmationPeriod">Период подтверждения после первого ёрзания</string>
+    <string name="confirmationPeriodValue">%1$d мин</string>
     <string name="integerValue">%1$d</string>
     <string name="exportModel">Экспорт модели</string>
     <string name="importModel">Импорт модели</string>

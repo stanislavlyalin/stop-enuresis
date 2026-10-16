@@ -43,11 +43,7 @@ class SampleFileBuilder(
         negativeFragmentCounter = 0
     }
 
-    fun addSamples(
-        pcm16MonoSamples: ShortArray,
-        readCount: Int,
-        classifierDetected: Boolean = false
-    ) {
+    fun addSamples(pcm16MonoSamples: ShortArray, readCount: Int) {
         if (readCount <= 0) return
         require(readCount <= pcm16MonoSamples.size) {
             "readCount ($readCount) must be <= pcm16MonoSamples.size (${pcm16MonoSamples.size})"
@@ -60,11 +56,16 @@ class SampleFileBuilder(
             (samplesSinceLastSilenceDecision + readCount).coerceAtMost(fragmentSizeSamples)
 
         if (recentAudioWindow.isFull) {
-            handleCurrentFragment(classifierDetected)
+            handleCurrentFragment()
         }
     }
 
-    private fun handleCurrentFragment(classifierDetected: Boolean) {
+    fun saveDetectedWindow(fragment: ShortArray) {
+        require(fragment.size == fragmentSizeSamples)
+        dispatchWrite(fragment, classLabel = 1, unchecked = true, classifierDetected = true)
+    }
+
+    private fun handleCurrentFragment() {
         val fragment = recentAudioWindow.copySamples()
         val averageEnvelope = AudioEnvelope.averageSmoothedAbsolute(
             input = fragment,
@@ -79,7 +80,7 @@ class SampleFileBuilder(
                     pcm16MonoSamples = fragment,
                     classLabel = 1,
                     unchecked = true,
-                    classifierDetected = classifierDetected
+                    classifierDetected = false
                 )
                 samplesSinceLastRustlingWrite = 0
             }

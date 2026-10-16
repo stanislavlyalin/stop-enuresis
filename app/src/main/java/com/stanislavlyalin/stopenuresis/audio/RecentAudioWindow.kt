@@ -22,13 +22,17 @@ class RecentAudioWindow(
     }
 
     fun append(samples: ShortArray, count: Int) {
+        append(samples, 0, count)
+    }
+
+    fun append(samples: ShortArray, offset: Int, count: Int) {
         if (count <= 0) return
-        require(count <= samples.size) {
-            "count ($count) must be <= samples.size (${samples.size})"
+        require(offset >= 0 && count <= samples.size - offset) {
+            "Invalid range: offset=$offset, count=$count, size=${samples.size}"
         }
 
-        val startIndex = (count - capacitySamples).coerceAtLeast(0)
-        for (sampleIndex in startIndex until count) {
+        val startIndex = offset + (count - capacitySamples).coerceAtLeast(0)
+        for (sampleIndex in startIndex until offset + count) {
             ringBuffer[writeIndex] = samples[sampleIndex]
             writeIndex++
             if (writeIndex == capacitySamples) writeIndex = 0

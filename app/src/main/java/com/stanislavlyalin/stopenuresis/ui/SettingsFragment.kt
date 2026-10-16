@@ -27,8 +27,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     private lateinit var seekBarCooldown: SeekBar
     private lateinit var tvCooldownValue: TextView
     private lateinit var switchDarkTheme: Switch
-    private lateinit var seekBarAlarmRustlingDetectionsPerMinute: SeekBar
-    private lateinit var tvAlarmRustlingDetectionsPerMinuteValue: TextView
+    private lateinit var seekBarAlarmRustlingEpisodes: SeekBar
+    private lateinit var tvAlarmRustlingEpisodesValue: TextView
+    private lateinit var seekBarConfirmationPeriod: SeekBar
+    private lateinit var tvConfirmationPeriodValue: TextView
     private lateinit var tvAppVersion: TextView
     private lateinit var btnExportModel: Button
     private lateinit var btnImportModel: Button
@@ -47,10 +49,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         seekBarCooldown = view.findViewById(R.id.seekBarCooldown)
         tvCooldownValue = view.findViewById(R.id.tvCooldownValue)
         switchDarkTheme = view.findViewById(R.id.switchDarkTheme)
-        seekBarAlarmRustlingDetectionsPerMinute =
-            view.findViewById(R.id.seekBarAlarmRustlingDetectionsPerMinute)
-        tvAlarmRustlingDetectionsPerMinuteValue =
-            view.findViewById(R.id.tvAlarmRustlingDetectionsPerMinuteValue)
+        seekBarAlarmRustlingEpisodes = view.findViewById(R.id.seekBarAlarmRustlingEpisodes)
+        tvAlarmRustlingEpisodesValue = view.findViewById(R.id.tvAlarmRustlingEpisodesValue)
+        seekBarConfirmationPeriod = view.findViewById(R.id.seekBarConfirmationPeriod)
+        tvConfirmationPeriodValue = view.findViewById(R.id.tvConfirmationPeriodValue)
         tvAppVersion = view.findViewById(R.id.tvAppVersion)
         btnExportModel = view.findViewById(R.id.btnExportModel)
         btnImportModel = view.findViewById(R.id.btnImportModel)
@@ -58,7 +60,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         setupDarkThemeSetting()
         setupListeningStartProtectionSetting()
         setupCooldownSetting()
-        setupAlarmRustlingDetectionsPerMinuteSetting()
+        setupAlarmRustlingEpisodesSetting()
+        setupConfirmationPeriodSetting()
         setupModelTransferButtons()
         tvAppVersion.text = getString(R.string.appVersion, BuildConfig.GIT_COMMIT)
     }
@@ -128,26 +131,23 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         )
     }
 
-    private fun setupAlarmRustlingDetectionsPerMinuteSetting() {
-        seekBarAlarmRustlingDetectionsPerMinute.max = 11
-        val value = AppSettings.getAlarmRustlingDetectionsPerMinute(requireContext())
-        seekBarAlarmRustlingDetectionsPerMinute.progress = value - 1
-        updateAlarmRustlingDetectionsPerMinuteValue(value)
+    private fun setupAlarmRustlingEpisodesSetting() {
+        seekBarAlarmRustlingEpisodes.max = 11
+        val value = AppSettings.getAlarmRustlingEpisodes(requireContext())
+        seekBarAlarmRustlingEpisodes.progress = value - 1
+        updateAlarmRustlingEpisodesValue(value)
 
-        seekBarAlarmRustlingDetectionsPerMinute.setOnSeekBarChangeListener(
+        seekBarAlarmRustlingEpisodes.setOnSeekBarChangeListener(
             object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(
                     seekBar: SeekBar?,
                     progress: Int,
                     fromUser: Boolean
                 ) {
-                    val detectionsPerMinute = progress + 1
-                    updateAlarmRustlingDetectionsPerMinuteValue(detectionsPerMinute)
+                    val episodes = progress + 1
+                    updateAlarmRustlingEpisodesValue(episodes)
                     if (fromUser) {
-                        AppSettings.setAlarmRustlingDetectionsPerMinute(
-                            requireContext(),
-                            detectionsPerMinute
-                        )
+                        AppSettings.setAlarmRustlingEpisodes(requireContext(), episodes)
                     }
                 }
 
@@ -158,9 +158,28 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         )
     }
 
-    private fun updateAlarmRustlingDetectionsPerMinuteValue(value: Int) {
-        tvAlarmRustlingDetectionsPerMinuteValue.text =
-            getString(R.string.integerValue, value)
+    private fun updateAlarmRustlingEpisodesValue(value: Int) {
+        tvAlarmRustlingEpisodesValue.text = getString(R.string.integerValue, value)
+    }
+
+    private fun setupConfirmationPeriodSetting() {
+        seekBarConfirmationPeriod.max = 9
+        val minutes = AppSettings.getConfirmationPeriodMinutes(requireContext())
+        seekBarConfirmationPeriod.progress = minutes - 1
+        tvConfirmationPeriodValue.text = getString(R.string.confirmationPeriodValue, minutes)
+        seekBarConfirmationPeriod.setOnSeekBarChangeListener(
+            object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+                    val value = progress + 1
+                    tvConfirmationPeriodValue.text =
+                        getString(R.string.confirmationPeriodValue, value)
+                    if (fromUser) AppSettings.setConfirmationPeriodMinutes(requireContext(), value)
+                }
+
+                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+            }
+        )
     }
 
     private fun updateCooldownValue(value: Int) {
