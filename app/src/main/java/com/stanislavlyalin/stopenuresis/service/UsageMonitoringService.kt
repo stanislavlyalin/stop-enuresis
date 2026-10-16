@@ -194,7 +194,6 @@ class UsageMonitoringService : Service() {
         audioRecord = record
         isListening.set(true)
         usageState = STATE_MONITORING
-        confirmation.reset()
         broadcastStatus()
         updateNotification()
         mainHandler.removeCallbacks(detectionStatusTick)
@@ -213,7 +212,6 @@ class UsageMonitoringService : Service() {
 
                 detectionWindows.append(buffer, readCount) { fragment ->
                     val now = SystemClock.elapsedRealtime()
-                    confirmation.advance(now)
                     val allowed = !alarmTriggerPosted && canTriggerAlarm()
                     val positive = allowed &&
                         AudioEnvelope.averageSmoothedAbsolute(fragment, SAMPLE_RATE) >= volumeThreshold &&

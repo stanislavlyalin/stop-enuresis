@@ -83,6 +83,7 @@ class MainActivity : AppCompatActivity() {
             file.isFile && (
                 file.name.endsWith("_1.wav") ||
                     file.name.endsWith("_1_unchecked.wav") ||
+                    file.name.endsWith("_1_detected_unchecked.wav") ||
                     file.name.endsWith("_0.wav")
                 )
         }?.isNotEmpty() == true
@@ -136,7 +137,10 @@ class MainActivity : AppCompatActivity() {
     private fun pendingSamplesCount(): Int {
         val samplesDir = AppStorage.samplesDir(this)
         return samplesDir.listFiles { file ->
-            file.isFile && file.name.endsWith("_1_unchecked.wav")
+            file.isFile && (
+                file.name.endsWith("_1_unchecked.wav") ||
+                    file.name.endsWith("_1_detected_unchecked.wav")
+                )
         }?.size ?: 0
     }
 }
