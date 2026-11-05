@@ -83,7 +83,6 @@
     <string name="usageHello">Привет!</string>
     <string name="usageSleeping">Z-z-z...</string>
     <string name="usageGoToToilet">Кажется, пора\nв туалет</string>
-    <string name="usageContinue">Продолжим?</string>
     <string name="startListening">Начать слушать</string>
     <string name="stopListening">Остановить</string>
     <string name="turnOffAlarm">Выключить будильник</string>
@@ -93,10 +92,7 @@
     <string name="fullScreenAlarmPermissionMessage">Разрешите полноэкранный будильник, чтобы выключать его жестом на заблокированном телефоне.</string>
     <string name="openSettings">Открыть настройки</string>
     <string name="continueWithoutLockScreen">Продолжить без экрана блокировки</string>
-    <string name="falseAlarm">Ложная тревога</string>
-    <string name="success">Успех!</string>
     <string name="modelFileNotFound">Сначала обучите модель</string>
-    <string name="nextAlarmAllowed">Следующее срабатывание не ранее %1$s</string>
     <string name="saveUsageSamples">Сохранять семплы</string>
     <string name="dataCollectionNotificationChannel">Сбор данных</string>
     <string name="dataCollectionNotificationTitle">Идёт запись данных</string>
@@ -105,5 +101,9 @@
     <string name="usageNotificationTitle">Мониторинг</string>
     <string name="usageMonitoringNotificationText">Приложение слушает микрофон</string>
     <string name="usageAlarmNotificationText">Сработал будильник. Смахните уведомление либо нажмите кнопку выключения.</string>
-    <string name="usagePostAlarmNotificationText">Выберите результат срабатывания</string>
+    <string name="protectionIntervalTitle">Защитный интервал</string>
+    <string name="protectionIntervalDescription">Пауза после запуска и выключения будильника. Во время паузы микрофон отключён.</string>
+    <string name="protectionIntervalValue">%1$d мин</string>
+    <string name="usagePaused">Пауза</string>
+    <string name="usagePauseUntil">Пауза до %1$s</string>
 </resources>

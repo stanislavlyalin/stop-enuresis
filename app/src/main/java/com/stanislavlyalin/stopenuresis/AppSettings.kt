@@ -4,8 +4,9 @@ import android.content.Context
 
 object AppSettings {
     const val DEFAULT_VOLUME_THRESHOLD = 75
-    const val DEFAULT_LISTENING_START_PROTECTION_HOURS = 1
-    const val DEFAULT_COOLDOWN_HOURS = 2
+    const val DEFAULT_PROTECTION_INTERVAL_MINUTES = 60
+    const val PROTECTION_INTERVAL_STEP_MINUTES = 30
+    const val MAX_PROTECTION_INTERVAL_MINUTES = 180
     const val DEFAULT_ALARM_RUSTLING_EPISODES = 3
     const val DEFAULT_CONFIRMATION_PERIOD_MINUTES = 2
     const val DEFAULT_USAGE_SAMPLE_SAVING_ENABLED = true
@@ -14,8 +15,7 @@ object AppSettings {
     private const val KEY_ABOUT_SCREEN_SEEN = "about_screen_seen"
     private const val KEY_DARK_THEME_ENABLED = "dark_theme_enabled"
     private const val KEY_VOLUME_THRESHOLD = "volume_threshold"
-    private const val KEY_LISTENING_START_PROTECTION_HOURS = "listening_start_protection_hours"
-    private const val KEY_COOLDOWN_HOURS = "cooldown_hours"
+    private const val KEY_PROTECTION_INTERVAL_MINUTES = "protection_interval_minutes"
     private const val KEY_ALARM_RUSTLING_EPISODES = "alarm_rustling_episodes"
     private const val KEY_LEGACY_ALARM_RUSTLING_DETECTIONS =
         "alarm_rustling_detections_per_minute"
@@ -59,32 +59,22 @@ object AppSettings {
             .apply()
     }
 
-    fun getListeningStartProtectionHours(context: Context): Int {
+    fun getProtectionIntervalMinutes(context: Context): Int {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getInt(
-                KEY_LISTENING_START_PROTECTION_HOURS,
-                DEFAULT_LISTENING_START_PROTECTION_HOURS
-            )
-            .coerceIn(0, 6)
+            .getInt(KEY_PROTECTION_INTERVAL_MINUTES, DEFAULT_PROTECTION_INTERVAL_MINUTES)
+            .let(::normalizeProtectionIntervalMinutes)
     }
 
-    fun setListeningStartProtectionHours(context: Context, value: Int) {
+    fun setProtectionIntervalMinutes(context: Context, value: Int) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putInt(KEY_LISTENING_START_PROTECTION_HOURS, value.coerceIn(0, 6))
+            .putInt(KEY_PROTECTION_INTERVAL_MINUTES, normalizeProtectionIntervalMinutes(value))
             .apply()
     }
 
-    fun getCooldownHours(context: Context): Int {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getInt(KEY_COOLDOWN_HOURS, DEFAULT_COOLDOWN_HOURS)
-    }
-
-    fun setCooldownHours(context: Context, value: Int) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putInt(KEY_COOLDOWN_HOURS, value.coerceIn(0, 6))
-            .apply()
+    internal fun normalizeProtectionIntervalMinutes(value: Int): Int {
+        return value.coerceIn(PROTECTION_INTERVAL_STEP_MINUTES, MAX_PROTECTION_INTERVAL_MINUTES) /
+            PROTECTION_INTERVAL_STEP_MINUTES * PROTECTION_INTERVAL_STEP_MINUTES
     }
 
     fun getAlarmRustlingEpisodes(context: Context): Int {

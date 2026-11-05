@@ -18,6 +18,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.stanislavlyalin.stopenuresis.AppSettings
@@ -42,11 +43,12 @@ import kotlin.concurrent.thread
 
 class UsageMonitoringService : Service() {
 
-    private val isListening = AtomicBoolean(false)
+    private var isListening = AtomicBoolean(false)
     private val mainHandler = Handler(Looper.getMainLooper())
     private val acousticFeatureExtractor = AcousticFeatureExtractor()
 
-    private var usageState = STATE_IDLE
+    private val cycle = MonitoringCycle()
+    private val usageState get() = cycle.state
     private var audioRecord: AudioRecord? = null
     private var listeningThread: Thread? = null
     private var toneGenerator: ToneGenerator? = null
@@ -56,17 +58,26 @@ class UsageMonitoringService : Service() {
         AppSettings.DEFAULT_CONFIRMATION_PERIOD_MINUTES * MINUTE_MS
     )
     private var requiredRustlingEpisodes = AppSettings.DEFAULT_ALARM_RUSTLING_EPISODES
-    @Volatile
-    private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
-    private var sampleSavingAllowedAfterElapsedRealtime = 0L
+
+    private val resumeListening = object : Runnable {
+        override fun run() {
+            val remaining = cycle.resumeAt - SystemClock.elapsedRealtime()
+            if (usageState != STATE_PAUSED) return
+            if (remaining > 0L) {
+                mainHandler.postDelayed(this, remaining)
+            } else if (cycle.resume(SystemClock.elapsedRealtime())) {
+                cooldownUntilWallClockMillis = 0L
+                startListening()
+            }
+        }
+    }
 
     private val detectionStatusTick = object : Runnable {
         override fun run() {
             if (usageState != STATE_MONITORING) return
             val nowElapsedRealtime = SystemClock.elapsedRealtime()
             confirmation.advance(nowElapsedRealtime)
-            clearExpiredCooldown(nowElapsedRealtime)
             broadcastStatus()
             mainHandler.postDelayed(this, DETECTION_STATUS_UPDATE_MS)
         }
@@ -88,46 +99,43 @@ class UsageMonitoringService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> startListening(applyStartProtection = true)
-            ACTION_STOP -> stopListening(stopService = true)
+            ACTION_START -> {
+                if (cycle.start(SystemClock.elapsedRealtime(), protectionMillis())) {
+                    startForeground(NOTIFICATION_ID, buildNotification())
+                    acquireWakeLock()
+                    schedulePause()
+                }
+            }
+            ACTION_STOP -> stopMonitoring()
             ACTION_TURN_OFF_ALARM -> turnOffAlarm()
-            ACTION_CONTINUE_MONITORING -> continueMonitoring(
-                useCooldown = intent.getBooleanExtra(EXTRA_USE_COOLDOWN, false)
-            )
             ACTION_REQUEST_STATUS -> broadcastStatus()
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
-        stopListening(stopService = false)
+        mainHandler.removeCallbacks(resumeListening)
+        stopListening()
         stopAlarm()
+        cycle.stop()
+        cooldownUntilWallClockMillis = 0L
+        broadcastStatus()
         releaseWakeLock()
         super.onDestroy()
     }
 
-    private fun startListening(applyStartProtection: Boolean) {
-        if (usageState == STATE_MONITORING) {
-            broadcastStatus()
-            return
-        }
-
+    private fun startListening() {
         val model = loadModel()
         if (model == null) {
-            usageState = STATE_IDLE
-            broadcastStatus()
-            stopSelf()
+            failListening(R.string.modelFileNotFound)
             return
         }
-
-        startForeground(NOTIFICATION_ID, buildNotification())
-        acquireWakeLock()
 
         val channelConfig = AudioFormat.CHANNEL_IN_MONO
         val audioFormat = AudioFormat.ENCODING_PCM_16BIT
         val minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, channelConfig, audioFormat)
         if (minBufferSize == AudioRecord.ERROR || minBufferSize == AudioRecord.ERROR_BAD_VALUE) {
-            stopListening(stopService = true)
+            failListening(R.string.audioRecordingSettingsError)
             return
         }
 
@@ -140,17 +148,17 @@ class UsageMonitoringService : Service() {
                 audioFormat,
                 bufferSize
             )
-        } catch (_: RuntimeException) {
-            stopListening(stopService = true)
-            return
         } catch (_: SecurityException) {
-            stopListening(stopService = true)
+            failListening(R.string.noAccessToMicrophone)
+            return
+        } catch (_: RuntimeException) {
+            failListening(R.string.failedToInitMicrophone)
             return
         }
 
         if (record.state != AudioRecord.STATE_INITIALIZED) {
             record.release()
-            stopListening(stopService = true)
+            failListening(R.string.audioRecordNotInitialized)
             return
         }
 
@@ -161,18 +169,6 @@ class UsageMonitoringService : Service() {
             requiredRustlingEpisodes,
             AppSettings.getConfirmationPeriodMinutes(this) * MINUTE_MS
         )
-        if (applyStartProtection) {
-            val protectionMillis = AppSettings.getListeningStartProtectionHours(this) * HOUR_MS
-            if (protectionMillis > 0L) {
-                cooldownUntilElapsedRealtime = SystemClock.elapsedRealtime() + protectionMillis
-                cooldownUntilWallClockMillis = System.currentTimeMillis() + protectionMillis
-                sampleSavingAllowedAfterElapsedRealtime = cooldownUntilElapsedRealtime
-            } else {
-                cooldownUntilElapsedRealtime = 0L
-                cooldownUntilWallClockMillis = 0L
-                sampleSavingAllowedAfterElapsedRealtime = 0L
-            }
-        }
         AppStorage.migrateLegacyData(this)
         val sampleFileBuilder = if (saveSamples) {
             SampleFileBuilder(
@@ -192,40 +188,47 @@ class UsageMonitoringService : Service() {
         }
 
         audioRecord = record
-        isListening.set(true)
-        usageState = STATE_MONITORING
+        try {
+            record.startRecording()
+        } catch (_: RuntimeException) {
+            failListening(R.string.failedToInitMicrophone)
+            return
+        }
+        // Отдельный флаг не позволяет старому потоку возобновиться вместе с новым сеансом.
+        val recordingActive = AtomicBoolean(true)
+        isListening = recordingActive
         broadcastStatus()
         updateNotification()
         mainHandler.removeCallbacks(detectionStatusTick)
         mainHandler.postDelayed(detectionStatusTick, DETECTION_STATUS_UPDATE_MS)
-
-        record.startRecording()
 
         listeningThread = thread(start = true, name = "UsageMonitoringServiceThread") {
             val buffer = ShortArray(bufferSize / 2)
             val detectionWindows = DetectionWindowStream(FRAGMENT_SIZE_SAMPLES)
             var alarmTriggerPosted = false
 
-            while (isListening.get()) {
+            while (recordingActive.get()) {
                 val readCount = record.read(buffer, 0, buffer.size)
                 if (readCount <= 0) continue
 
                 detectionWindows.append(buffer, readCount) { fragment ->
+                    if (!recordingActive.get()) return@append FRAGMENT_SIZE_SAMPLES
                     val now = SystemClock.elapsedRealtime()
-                    val allowed = !alarmTriggerPosted && canTriggerAlarm()
+                    val allowed = !alarmTriggerPosted
                     val positive = allowed &&
                         AudioEnvelope.averageSmoothedAbsolute(fragment, SAMPLE_RATE) >= volumeThreshold &&
                         isRustling(model, fragment)
+                    if (!recordingActive.get()) return@append FRAGMENT_SIZE_SAMPLES
                     val result = confirmation.accept(positive, now, allowed)
                     if (result.newEpisode) {
-                        if (now >= sampleSavingAllowedAfterElapsedRealtime) {
-                            sampleFileBuilder?.saveDetectedWindow(fragment)
+                        sampleFileBuilder?.saveDetectedWindow(fragment)
+                        mainHandler.post {
+                            if (recordingActive.get()) broadcastStatus()
                         }
-                        broadcastStatus()
                         if (result.alarm) {
                             alarmTriggerPosted = true
                             mainHandler.post {
-                                if (usageState == STATE_MONITORING) triggerAlarm()
+                                if (recordingActive.get() && usageState == STATE_MONITORING) triggerAlarm()
                             }
                         }
                     }
@@ -233,7 +236,7 @@ class UsageMonitoringService : Service() {
                     else FRAGMENT_SIZE_SAMPLES
                 }
 
-                if (SystemClock.elapsedRealtime() >= sampleSavingAllowedAfterElapsedRealtime) {
+                if (recordingActive.get()) {
                     sampleFileBuilder?.addSamples(buffer, readCount)
                 }
             }
@@ -246,42 +249,25 @@ class UsageMonitoringService : Service() {
         })
     }
 
-    private fun stopListening(stopService: Boolean) {
-        if (!isListening.getAndSet(false)) {
-            if (usageState == STATE_MONITORING) usageState = STATE_IDLE
-            broadcastStatus()
-            if (stopService) stopSelf()
-            return
-        }
-
+    private fun stopListening() {
+        isListening.set(false)
         try {
             audioRecord?.stop()
         } catch (_: IllegalStateException) {
         }
 
-        audioRecord?.release()
-        audioRecord = null
         listeningThread?.join(300)
         listeningThread = null
+        audioRecord?.release()
+        audioRecord = null
         mainHandler.removeCallbacks(detectionStatusTick)
 
-        if (usageState == STATE_MONITORING) {
-            cooldownUntilWallClockMillis = 0L
-            usageState = STATE_IDLE
-        }
         confirmation.reset()
-        broadcastStatus()
-        updateNotification()
-
-        if (stopService) {
-            releaseWakeLock()
-            stopSelf()
-        }
     }
 
     private fun triggerAlarm() {
-        stopListening(stopService = false)
-        usageState = STATE_ALARMING
+        if (!cycle.alarm()) return
+        stopListening()
         toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, ALARM_VOLUME_PERCENT)
         mainHandler.removeCallbacks(alarmTick)
         alarmTick.run()
@@ -290,19 +276,37 @@ class UsageMonitoringService : Service() {
     }
 
     private fun turnOffAlarm() {
+        if (!cycle.dismiss(SystemClock.elapsedRealtime(), protectionMillis())) return
         stopAlarm()
-        usageState = STATE_POST_ALARM
+        schedulePause()
+    }
+
+    private fun protectionMillis() = AppSettings.getProtectionIntervalMinutes(this) * MINUTE_MS
+
+    private fun schedulePause() {
+        val remaining = cycle.resumeAt - SystemClock.elapsedRealtime()
+        cooldownUntilWallClockMillis = System.currentTimeMillis() + remaining
+        mainHandler.removeCallbacks(resumeListening)
+        mainHandler.postDelayed(resumeListening, remaining.coerceAtLeast(0L))
         broadcastStatus()
         updateNotification()
     }
 
-    private fun continueMonitoring(useCooldown: Boolean) {
-        if (useCooldown) {
-            val cooldownMillis = AppSettings.getCooldownHours(this) * HOUR_MS
-            cooldownUntilElapsedRealtime = SystemClock.elapsedRealtime() + cooldownMillis
-            cooldownUntilWallClockMillis = System.currentTimeMillis() + cooldownMillis
-        }
-        startListening(applyStartProtection = false)
+    private fun stopMonitoring() {
+        mainHandler.removeCallbacks(resumeListening)
+        stopListening()
+        stopAlarm()
+        cycle.stop()
+        cooldownUntilWallClockMillis = 0L
+        broadcastStatus()
+        releaseWakeLock()
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    private fun failListening(message: Int) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        stopMonitoring()
     }
 
     private fun stopAlarm() {
@@ -344,7 +348,8 @@ class UsageMonitoringService : Service() {
         val text = when (usageState) {
             STATE_MONITORING -> getString(R.string.usageMonitoringNotificationText)
             STATE_ALARMING -> getString(R.string.usageAlarmNotificationText)
-            STATE_POST_ALARM -> getString(R.string.usagePostAlarmNotificationText)
+            STATE_PAUSED -> getString(R.string.usagePauseUntil, SimpleDateFormat("HH:mm", Locale.getDefault())
+                .format(Date(cooldownUntilWallClockMillis)))
             else -> getString(R.string.usageMonitoringNotificationText)
         }
         val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
@@ -427,10 +432,6 @@ class UsageMonitoringService : Service() {
         wakeLock = null
     }
 
-    private fun canTriggerAlarm(): Boolean {
-        return SystemClock.elapsedRealtime() >= cooldownUntilElapsedRealtime
-    }
-
     private fun isRustling(model: ExtraTreesModel, pcm16MonoSamples: ShortArray): Boolean {
         val floatSamples = FloatArray(pcm16MonoSamples.size) { index ->
             pcm16MonoSamples[index].toFloat() / Short.MAX_VALUE.toFloat()
@@ -442,13 +443,6 @@ class UsageMonitoringService : Service() {
             )
         )
         return model.predictProbability(features) >= CLASSIFICATION_THRESHOLD
-    }
-
-    private fun clearExpiredCooldown(nowElapsedRealtime: Long) {
-        if (cooldownUntilElapsedRealtime in 1..nowElapsedRealtime) {
-            cooldownUntilElapsedRealtime = 0L
-            cooldownUntilWallClockMillis = 0L
-        }
     }
 
     private fun loadModel(): ExtraTreesModel? {
@@ -467,10 +461,10 @@ class UsageMonitoringService : Service() {
         const val EXTRA_COOLDOWN_UNTIL_WALL_CLOCK = "cooldownUntilWallClock"
         const val EXTRA_RUSTLING_EPISODE_COUNT = "rustlingEpisodeCount"
         const val EXTRA_REQUIRED_RUSTLING_EPISODES = "requiredRustlingEpisodes"
-        const val STATE_IDLE = "idle"
-        const val STATE_MONITORING = "monitoring"
-        const val STATE_ALARMING = "alarming"
-        const val STATE_POST_ALARM = "post_alarm"
+        const val STATE_IDLE = MonitoringCycle.IDLE
+        const val STATE_PAUSED = MonitoringCycle.PAUSED
+        const val STATE_MONITORING = MonitoringCycle.MONITORING
+        const val STATE_ALARMING = MonitoringCycle.ALARMING
         @Volatile
         var stateSnapshot = STATE_IDLE
             private set
@@ -487,11 +481,8 @@ class UsageMonitoringService : Service() {
         private const val ACTION_START = "com.stanislavlyalin.stopenuresis.action.START_USAGE_MONITORING"
         private const val ACTION_STOP = "com.stanislavlyalin.stopenuresis.action.STOP_USAGE_MONITORING"
         private const val ACTION_TURN_OFF_ALARM = "com.stanislavlyalin.stopenuresis.action.TURN_OFF_ALARM"
-        private const val ACTION_CONTINUE_MONITORING =
-            "com.stanislavlyalin.stopenuresis.action.CONTINUE_USAGE_MONITORING"
         private const val ACTION_REQUEST_STATUS =
             "com.stanislavlyalin.stopenuresis.action.REQUEST_USAGE_STATUS"
-        private const val EXTRA_USE_COOLDOWN = "useCooldown"
         private const val CHANNEL_ID = "usage_monitoring"
         private const val NOTIFICATION_ID = 1002
 
@@ -507,7 +498,6 @@ class UsageMonitoringService : Service() {
         private const val ALARM_REPEAT_MS = 1000L
         private const val DETECTION_STATUS_UPDATE_MS = 1000L
         private const val MINUTE_MS = 60L * 1000L
-        private const val HOUR_MS = 60L * 60L * 1000L
 
         fun start(context: Context) {
             ContextCompat.startForegroundService(
@@ -526,16 +516,6 @@ class UsageMonitoringService : Service() {
             context.startService(Intent(context, UsageMonitoringService::class.java).apply {
                 action = ACTION_TURN_OFF_ALARM
             })
-        }
-
-        fun continueMonitoring(context: Context, useCooldown: Boolean) {
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, UsageMonitoringService::class.java).apply {
-                    action = ACTION_CONTINUE_MONITORING
-                    putExtra(EXTRA_USE_COOLDOWN, useCooldown)
-                }
-            )
         }
 
         fun requestStatus(context: Context) {

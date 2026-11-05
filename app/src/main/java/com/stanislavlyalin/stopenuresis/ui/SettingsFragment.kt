@@ -22,8 +22,6 @@ import org.json.JSONObject
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
-    private lateinit var seekBarListeningStartProtection: SeekBar
-    private lateinit var tvListeningStartProtectionValue: TextView
     private lateinit var seekBarCooldown: SeekBar
     private lateinit var tvCooldownValue: TextView
     private lateinit var switchDarkTheme: Switch
@@ -44,8 +42,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        seekBarListeningStartProtection = view.findViewById(R.id.seekBarListeningStartProtection)
-        tvListeningStartProtectionValue = view.findViewById(R.id.tvListeningStartProtectionValue)
         seekBarCooldown = view.findViewById(R.id.seekBarCooldown)
         tvCooldownValue = view.findViewById(R.id.tvCooldownValue)
         switchDarkTheme = view.findViewById(R.id.switchDarkTheme)
@@ -58,7 +54,6 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         btnImportModel = view.findViewById(R.id.btnImportModel)
 
         setupDarkThemeSetting()
-        setupListeningStartProtectionSetting()
         setupCooldownSetting()
         setupAlarmRustlingEpisodesSetting()
         setupConfirmationPeriodSetting()
@@ -81,8 +76,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupCooldownSetting() {
-        seekBarCooldown.max = 6
-        seekBarCooldown.progress = AppSettings.getCooldownHours(requireContext())
+        seekBarCooldown.max = AppSettings.MAX_PROTECTION_INTERVAL_MINUTES /
+            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1
+        seekBarCooldown.progress = AppSettings.getProtectionIntervalMinutes(requireContext()) /
+            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1
         updateCooldownValue(seekBarCooldown.progress)
 
         seekBarCooldown.setOnSeekBarChangeListener(
@@ -94,33 +91,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 ) {
                     updateCooldownValue(progress)
                     if (fromUser) {
-                        AppSettings.setCooldownHours(requireContext(), progress)
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-            }
-        )
-    }
-
-    private fun setupListeningStartProtectionSetting() {
-        seekBarListeningStartProtection.max = 6
-        seekBarListeningStartProtection.progress =
-            AppSettings.getListeningStartProtectionHours(requireContext())
-        updateListeningStartProtectionValue(seekBarListeningStartProtection.progress)
-
-        seekBarListeningStartProtection.setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    updateListeningStartProtectionValue(progress)
-                    if (fromUser) {
-                        AppSettings.setListeningStartProtectionHours(requireContext(), progress)
+                        AppSettings.setProtectionIntervalMinutes(
+                            requireContext(), (progress + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
+                        )
                     }
                 }
 
@@ -182,21 +155,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         )
     }
 
-    private fun updateCooldownValue(value: Int) {
-        tvCooldownValue.text = formatHours(value)
-    }
-
-    private fun updateListeningStartProtectionValue(value: Int) {
-        tvListeningStartProtectionValue.text = formatHours(value)
-    }
-
-    private fun formatHours(value: Int): String {
-        return when (value) {
-            0 -> "0 часов"
-            1 -> "1 час"
-            in 2..4 -> "$value часа"
-            else -> "$value часов"
-        }
+    private fun updateCooldownValue(progress: Int) {
+        tvCooldownValue.text = getString(
+            R.string.protectionIntervalValue,
+            (progress + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
+        )
     }
 
     private fun setupModelTransferButtons() {

@@ -10,17 +10,9 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
-import android.media.AudioFormat
-import android.media.AudioRecord
-import android.media.AudioManager
-import android.media.MediaRecorder
-import android.media.ToneGenerator
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
-import android.os.SystemClock
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
@@ -36,16 +28,11 @@ import com.stanislavlyalin.stopenuresis.AppStorage
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.service.UsageMonitoringService
 import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
-import com.stanislavlyalin.stopenuresis.training.AcousticFeatureExtractor
-import com.stanislavlyalin.stopenuresis.training.WavAudio
-import com.stanislavlyalin.stopenuresis.audio.StreamingMovingAverageSmoother
 import org.json.JSONObject
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.thread
 
 class UsageFragment : Fragment(R.layout.fragment_usage) {
 
@@ -54,20 +41,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private lateinit var tvNextAlarmAllowed: TextView
     private lateinit var btnUsageMain: Button
     private lateinit var cbSaveSamples: CheckBox
-    private lateinit var layoutUsageFeedback: LinearLayout
-    private lateinit var btnFalseAlarm: Button
-    private lateinit var btnSuccess: Button
-
-    private val isListening = AtomicBoolean(false)
-    private val mainHandler = Handler(Looper.getMainLooper())
-    private val acousticFeatureExtractor = AcousticFeatureExtractor()
-
     private var usageState = UsageState.IDLE
-    private var audioRecord: AudioRecord? = null
-    private var listeningThread: Thread? = null
-    private var toneGenerator: ToneGenerator? = null
-    @Volatile
-    private var cooldownUntilElapsedRealtime = 0L
     private var cooldownUntilWallClockMillis = 0L
     private var rustlingEpisodeCount = 0
     private var requiredRustlingEpisodes = AppSettings.DEFAULT_ALARM_RUSTLING_EPISODES
@@ -98,13 +72,6 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         }
     }
 
-    private val alarmTick = object : Runnable {
-        override fun run() {
-            toneGenerator?.startTone(ToneGenerator.TONE_CDMA_ALERT_CALL_GUARD, ALARM_TONE_MS)
-            mainHandler.postDelayed(this, ALARM_REPEAT_MS)
-        }
-    }
-
     private val requestPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) {
@@ -127,9 +94,6 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         tvNextAlarmAllowed = view.findViewById(R.id.tvNextAlarmAllowed)
         btnUsageMain = view.findViewById(R.id.btnUsageMain)
         cbSaveSamples = view.findViewById(R.id.cbSaveSamples)
-        layoutUsageFeedback = view.findViewById(R.id.layoutUsageFeedback)
-        btnFalseAlarm = view.findViewById(R.id.btnFalseAlarm)
-        btnSuccess = view.findViewById(R.id.btnSuccess)
 
         cbSaveSamples.isChecked = AppSettings.isUsageSampleSavingEnabled(requireContext())
         cbSaveSamples.setOnCheckedChangeListener { _, isChecked ->
@@ -139,13 +103,10 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         btnUsageMain.setOnClickListener {
             when (usageState) {
                 UsageState.IDLE -> ensurePermissionAndStart()
-                UsageState.MONITORING -> stopListening()
+                UsageState.MONITORING, UsageState.PAUSED -> stopListening()
                 UsageState.ALARMING -> turnOffAlarm()
-                UsageState.POST_ALARM -> Unit
             }
         }
-        btnFalseAlarm.setOnClickListener { continueMonitoring(useCooldown = false) }
-        btnSuccess.setOnClickListener { continueMonitoring(useCooldown = true) }
 
         setUsageState(UsageState.IDLE)
         updateRustlingDetectionIndicator()
@@ -160,10 +121,6 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     override fun onStop() {
         super.onStop()
         unregisterUsageReceiver()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
     }
 
     private fun ensurePermissionAndStart() {
@@ -189,7 +146,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     }
 
     private fun startListening(checkFullScreenIntentPermission: Boolean = true) {
-        if (usageState == UsageState.MONITORING) return
+        if (usageState != UsageState.IDLE) return
 
         if (
             checkFullScreenIntentPermission &&
@@ -209,7 +166,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             return
         }
 
-        setUsageState(UsageState.MONITORING)
+        setUsageState(UsageState.PAUSED)
         rustlingEpisodeCount = 0
         requiredRustlingEpisodes = AppSettings.getAlarmRustlingEpisodes(requireContext())
         updateRustlingDetectionIndicator()
@@ -240,28 +197,8 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         setUsageState(UsageState.IDLE)
     }
 
-    private fun triggerAlarm() {
-        stopListening()
-        setUsageState(UsageState.ALARMING)
-        toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, ALARM_VOLUME_PERCENT)
-        mainHandler.removeCallbacks(alarmTick)
-        alarmTick.run()
-    }
-
     private fun turnOffAlarm() {
         UsageMonitoringService.turnOffAlarm(requireContext())
-        setUsageState(UsageState.POST_ALARM)
-    }
-
-    private fun continueMonitoring(useCooldown: Boolean) {
-        UsageMonitoringService.continueMonitoring(requireContext(), useCooldown)
-        setUsageState(UsageState.MONITORING)
-    }
-
-    private fun stopAlarm() {
-        mainHandler.removeCallbacks(alarmTick)
-        toneGenerator?.release()
-        toneGenerator = null
     }
 
     private fun setUsageState(state: UsageState) {
@@ -270,21 +207,19 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             UsageState.IDLE -> getString(R.string.usageHello)
             UsageState.MONITORING -> getString(R.string.usageSleeping)
             UsageState.ALARMING -> getString(R.string.usageGoToToilet)
-            UsageState.POST_ALARM -> getString(R.string.usageContinue)
+            UsageState.PAUSED -> getString(R.string.usagePaused)
         }
 
         btnUsageMain.text = when (state) {
             UsageState.IDLE -> getString(R.string.startListening)
             UsageState.MONITORING -> getString(R.string.stopListening)
             UsageState.ALARMING -> getString(R.string.turnOffAlarm)
-            UsageState.POST_ALARM -> getString(R.string.turnOffAlarm)
+            UsageState.PAUSED -> getString(R.string.stopListening)
         }
-        btnUsageMain.visibility = if (state == UsageState.POST_ALARM) View.GONE else View.VISIBLE
-        layoutUsageFeedback.visibility = if (state == UsageState.POST_ALARM) View.VISIBLE else View.GONE
         layoutRustlingDetections.visibility =
             if (state == UsageState.MONITORING) View.VISIBLE else View.GONE
         if (::cbSaveSamples.isInitialized) {
-            cbSaveSamples.isEnabled = state == UsageState.IDLE || state == UsageState.POST_ALARM
+            cbSaveSamples.isEnabled = state == UsageState.IDLE
         }
     }
 
@@ -335,7 +270,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
         val formatter = SimpleDateFormat("HH:mm", Locale.getDefault())
         tvNextAlarmAllowed.text = getString(
-            R.string.nextAlarmAllowed,
+            R.string.usagePauseUntil,
             formatter.format(Date(cooldownUntilWallClockMillis))
         )
         tvNextAlarmAllowed.visibility = View.VISIBLE
@@ -349,17 +284,10 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     }
 
     private fun registerUsageReceiver() {
-        val filter = IntentFilter(UsageMonitoringService.ACTION_STATUS)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            requireContext().registerReceiver(
-                usageStatusReceiver,
-                filter,
-                Context.RECEIVER_NOT_EXPORTED
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            requireContext().registerReceiver(usageStatusReceiver, filter)
-        }
+        ContextCompat.registerReceiver(
+            requireContext(), usageStatusReceiver,
+            IntentFilter(UsageMonitoringService.ACTION_STATUS), ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     private fun unregisterUsageReceiver() {
@@ -383,26 +311,9 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         return when (state) {
             UsageMonitoringService.STATE_MONITORING -> UsageState.MONITORING
             UsageMonitoringService.STATE_ALARMING -> UsageState.ALARMING
-            UsageMonitoringService.STATE_POST_ALARM -> UsageState.POST_ALARM
+            UsageMonitoringService.STATE_PAUSED -> UsageState.PAUSED
             else -> UsageState.IDLE
         }
-    }
-
-    private fun canTriggerAlarm(): Boolean {
-        return SystemClock.elapsedRealtime() >= cooldownUntilElapsedRealtime
-    }
-
-    private fun isRustling(model: ExtraTreesModel, pcm16MonoSamples: ShortArray): Boolean {
-        val floatSamples = FloatArray(pcm16MonoSamples.size) { index ->
-            pcm16MonoSamples[index].toFloat() / Short.MAX_VALUE.toFloat()
-        }
-        val features = acousticFeatureExtractor.extractFeatures(
-            WavAudio(
-                sampleRate = SAMPLE_RATE,
-                samples = floatSamples
-            )
-        )
-        return model.predictProbability(features) >= CLASSIFICATION_THRESHOLD
     }
 
     private fun loadModel(): ExtraTreesModel? {
@@ -419,17 +330,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         IDLE,
         MONITORING,
         ALARMING,
-        POST_ALARM
+        PAUSED
     }
 
-    private companion object {
-        const val SAMPLE_RATE = 16000
-        const val FRAGMENT_SECONDS = 5
-        const val FRAGMENT_SIZE_SAMPLES = SAMPLE_RATE * FRAGMENT_SECONDS
-        const val CLASSIFICATION_THRESHOLD = 0.5
-        const val ALARM_VOLUME_PERCENT = 100
-        const val ALARM_TONE_MS = 450
-        const val ALARM_REPEAT_MS = 1000L
-        const val HOUR_MS = 60L * 60L * 1000L
-    }
 }
