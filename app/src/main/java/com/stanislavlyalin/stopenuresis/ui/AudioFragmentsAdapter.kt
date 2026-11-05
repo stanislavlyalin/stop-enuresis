@@ -54,7 +54,7 @@ class AudioFragmentsAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(files[position])
+        holder.bind(files[position], position == 0 || formatDisplayName(files[position]).takeLast(10) != formatDisplayName(files[position - 1]).takeLast(10))
     }
 
     override fun getItemCount(): Int = files.size
@@ -66,19 +66,22 @@ class AudioFragmentsAdapter(
         private val waveformView: WaveformView = itemView.findViewById(R.id.waveformAudioFragment)
         private val btnPlay: ImageButton = itemView.findViewById(R.id.btnPlay)
         private val btnDelete: ImageButton = itemView.findViewById(R.id.btnDelete)
-        private val btnReject: ImageButton = itemView.findViewById(R.id.btnReject)
-        private val btnAccept: ImageButton = itemView.findViewById(R.id.btnAccept)
+        private val btnReject: android.widget.Button = itemView.findViewById(R.id.btnReject)
+        private val btnAccept: android.widget.Button = itemView.findViewById(R.id.btnAccept)
 
-        fun bind(file: File) {
+        fun bind(file: File, showDate: Boolean) {
+            val date = itemView.findViewById<TextView>(R.id.sampleDate)
+            date.text = formatDisplayName(file).takeLast(10)
+            date.visibility = if (showDate) View.VISIBLE else View.GONE
             val isPlaying = file.absolutePath == playingFilePath
             val audioInfo = getAudioInfo(file)
 
-            tvFileName.text = formatDisplayName(file)
+            tvFileName.text = formatDisplayName(file).substringBefore(" ")
             if (file.name.endsWith(CLASSIFIER_DETECTED_SUFFIX)) {
                 tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.rustling))
                 tvFileName.setTypeface(null, Typeface.BOLD)
             } else {
-                tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.black))
+                tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.ui_text))
                 tvFileName.setTypeface(null, Typeface.NORMAL)
             }
             tvAverageAmplitude.text = audioInfo.averageAmplitude.toString()
@@ -86,7 +89,7 @@ class AudioFragmentsAdapter(
             waveformView.setProgress(if (isPlaying) playbackProgress else 0f)
 
             btnPlay.setImageResource(
-                if (isPlaying) R.drawable.ic_stop_24 else android.R.drawable.ic_media_play
+                if (isPlaying) R.drawable.ic_stop_24 else R.drawable.ic_nav_play
             )
             btnPlay.contentDescription = itemView.context.getString(
                 if (isPlaying) R.string.stopAudioFragment else R.string.playAudioFragment
@@ -98,7 +101,12 @@ class AudioFragmentsAdapter(
                     onPlay(file)
                 }
             }
-            btnDelete.setOnClickListener { onDelete(file) }
+            btnDelete.setOnClickListener { anchor ->
+                android.widget.PopupMenu(itemView.context, anchor).apply {
+                    menu.add(R.string.deleteAudioFragment).setOnMenuItemClickListener { onDelete(file); true }
+                    show()
+                }
+            }
             btnReject.setOnClickListener { onReject(file) }
             btnAccept.setOnClickListener { onApprove(file) }
         }

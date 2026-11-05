@@ -189,7 +189,10 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             }
         }
         btnClearPendingSamples.setOnClickListener {
-            showClearPendingSamplesDialog()
+            android.widget.PopupMenu(requireContext(), btnClearPendingSamples).apply {
+                menu.add(R.string.clearPendingSamples).setOnMenuItemClickListener { showClearPendingSamplesDialog(); true }
+                show()
+            }
         }
     }
 
@@ -211,6 +214,9 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun setRecordingState(state: RecordingState) {
+        view?.findViewById<TextView>(R.id.tvDataCollectionTitle)?.text = getString(
+            if (state == RecordingState.RECORDING) R.string.quiet_recording else R.string.collectData)
+
         recordingState = state
         btnRecordToggle.text = when (state) {
             RecordingState.IDLE -> getString(R.string.startRecording)
@@ -269,6 +275,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         val dataSet = LineDataSet(mutableListOf(), "Amplitude")
         dataSet.setDrawValues(false)
         dataSet.setDrawCircles(false)
+        dataSet.color = requireContext().getColor(R.color.brand_orange)
         dataSet.lineWidth = 2f
 
         lineChartAmplitude.data = LineData(dataSet)
@@ -733,6 +740,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         val dataSet = LineDataSet(mutableListOf(), "Amplitude")
         dataSet.setDrawValues(false)
         dataSet.setDrawCircles(false)
+        dataSet.color = requireContext().getColor(R.color.brand_orange)
         dataSet.lineWidth = 2f
 
         lineChartAmplitude.data = LineData(dataSet)
@@ -741,6 +749,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun updateThresholdLine() {
+        lineChartAmplitude.axisLeft.textColor = requireContext().getColor(R.color.ui_secondary)
+        lineChartAmplitude.xAxis.textColor = requireContext().getColor(R.color.ui_secondary)
         val axisLeft = lineChartAmplitude.axisLeft
         axisLeft.removeAllLimitLines()
 

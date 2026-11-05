@@ -18,12 +18,12 @@ class WaveformView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val inactivePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(190, 190, 190)
+        color = context.getColor(com.stanislavlyalin.stopenuresis.R.color.ui_divider)
         strokeWidth = 2f
         style = Paint.Style.FILL
     }
     private val activePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.rgb(0, 150, 0)
+        color = context.getColor(com.stanislavlyalin.stopenuresis.R.color.brand_orange)
         strokeWidth = 2f
         style = Paint.Style.FILL
     }

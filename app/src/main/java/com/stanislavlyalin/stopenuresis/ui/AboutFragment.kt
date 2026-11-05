@@ -9,5 +9,7 @@ class AboutFragment : Fragment(R.layout.fragment_about) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        view.findViewById<android.widget.TextView>(R.id.aboutVersion).text =
+            getString(R.string.appVersion, com.stanislavlyalin.stopenuresis.BuildConfig.VERSION_NAME)
     }
 }

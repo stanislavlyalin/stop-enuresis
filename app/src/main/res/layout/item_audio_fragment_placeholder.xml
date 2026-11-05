@@ -1,92 +1,98 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version='1.0' encoding='utf-8'?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="52dp"
-    android:layout_marginBottom="4dp"
-    android:paddingHorizontal="4dp">
-
-    <ImageButton
-        android:id="@+id/btnPlay"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/playAudioFragment"
-        android:src="@android:drawable/ic_media_play"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageButton
-        android:id="@+id/btnDelete"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/deleteAudioFragment"
-        android:src="@drawable/ic_delete_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnReject"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageButton
-        android:id="@+id/btnReject"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/rejectAudioFragment"
-        android:src="@drawable/ic_close_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/btnAccept"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageButton
-        android:id="@+id/btnAccept"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/acceptAudioFragment"
-        android:src="@drawable/ic_check_24"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="0dp"
+    android:paddingHorizontal="4dp"
+    android:minHeight="56dp">
     <TextView
-        android:id="@+id/tvAudioFragmentAverageAmplitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
-        android:textColor="#009000"
-        android:textSize="15sp"
-        app:layout_constraintBaseline_toBaselineOf="@id/tvAudioFragmentFileName"
-        app:layout_constraintEnd_toStartOf="@id/btnDelete"
-        tools:text="65" />
-
+    android:id="@+id/sampleDate"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:textSize="12sp"
+    android:textColor="@color/ui_secondary"
+    app:layout_constraintTop_toTopOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintEnd_toEndOf="parent" /><ImageButton
+    android:id="@+id/btnPlay"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/playAudioFragment"
+    android:src="@drawable/ic_nav_play"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/sampleDate" />
+    <ImageButton
+    android:id="@+id/btnDelete"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/deleteAudioFragment"
+    android:src="@drawable/ic_more"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toStartOf="@id/btnReject"
+    app:layout_constraintTop_toBottomOf="@id/sampleDate" />
+    <Button
+    android:id="@+id/btnReject"
+    android:layout_width="60dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/rejectAudioFragment"
+    android:text="Тишина"
+    android:textSize="11sp"
+    android:padding="0dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toStartOf="@id/btnAccept"
+    app:layout_constraintTop_toBottomOf="@id/sampleDate" />
+    <Button
+    android:id="@+id/btnAccept"
+    android:layout_width="60dp"
+    android:layout_height="48dp"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/acceptAudioFragment"
+    android:text="Ёрзает"
+    android:textSize="11sp"
+    android:padding="0dp"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintTop_toBottomOf="@id/sampleDate" />
     <TextView
-        android:id="@+id/tvAudioFragmentFileName"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textAppearance="?attr/textAppearanceBodyMedium"
-        android:textColor="@color/black"
-        android:textSize="15sp"
-        app:layout_constraintStart_toEndOf="@id/btnPlay"
-        app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="23:10:42 08.05.2026" />
-
+    android:id="@+id/tvAudioFragmentAverageAmplitude"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="2dp"
+    android:textColor="@color/ui_secondary"
+    android:textSize="12sp"
+    app:layout_constraintBaseline_toBaselineOf="@id/tvAudioFragmentFileName"
+    app:layout_constraintEnd_toStartOf="@id/btnDelete"
+    tools:text="65" />
+    <TextView
+    android:id="@+id/tvAudioFragmentFileName"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="2dp"
+    android:layout_marginEnd="2dp"
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:textAppearance="?attr/textAppearanceBodyMedium"
+    android:textColor="@color/ui_text"
+    android:textSize="12sp"
+    app:layout_constraintStart_toEndOf="@id/btnPlay"
+    app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
+    tools:text="23:10:42 08.05.2026"
+    app:layout_constraintTop_toBottomOf="@id/sampleDate" />
     <com.stanislavlyalin.stopenuresis.ui.WaveformView
-        android:id="@+id/waveformAudioFragment"
-        android:layout_width="0dp"
-        android:layout_height="12dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
-        app:layout_constraintStart_toEndOf="@id/btnPlay"
-        app:layout_constraintTop_toBottomOf="@id/tvAudioFragmentFileName"
-        tools:background="#eeeeee" />
-
+    android:id="@+id/waveformAudioFragment"
+    android:layout_width="0dp"
+    android:layout_height="12dp"
+    android:layout_marginStart="2dp"
+    android:layout_marginEnd="2dp"
+    app:layout_constraintEnd_toStartOf="@id/tvAudioFragmentAverageAmplitude"
+    app:layout_constraintStart_toEndOf="@id/btnPlay"
+    app:layout_constraintTop_toBottomOf="@id/tvAudioFragmentFileName"
+    tools:background="#eeeeee" />
 </androidx.constraintlayout.widget.ConstraintLayout>
