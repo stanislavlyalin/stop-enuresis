@@ -61,13 +61,7 @@
     <string
     name="quiet_metrics">Точность %1$d%% · Порог %2$d</string>
     <string
-    name="quiet_dataset_summary">Ёрзание: %1$d записей
-Уровень %2$s
-
-Тишина: %3$d записей
-Уровень %4$s
-
-Всего: %5$d примеров</string>
+    name="quiet_dataset_summary">Ёрзание: %1$d записей\nУровень %2$s\n\nТишина: %3$d записей\nУровень %4$s\n\nВсего: %5$d примеров</string>
     <string
     name="quiet_ready">Готово к запуску</string>
     <string

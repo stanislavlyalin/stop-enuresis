@@ -1,103 +1,101 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version='1.0' encoding='utf-8'?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
-    tools:context=".ui.TrainingFragment">
-
-    <TextView
-        android:id="@+id/tvTrainingStatusCircle"
-        android:layout_width="220dp"
-        android:layout_height="220dp"
-        android:background="@drawable/bg_training_status_circle"
-        android:gravity="center"
-        android:text="@string/modelNotTrained"
-        android:textAlignment="center"
-        android:textAppearance="?attr/textAppearanceTitleLarge"
-        app:layout_constraintBottom_toTopOf="@id/tvTrainingDatasetStats"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
-
-    <TextView
-        android:id="@+id/tvTrainingDatasetStats"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        app:layout_constraintBottom_toTopOf="@id/checkBoxBalanceDataset"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTrainingStatusCircle"
-        tools:text="Выборка:\nёрзает: 20 примеров (уровень 85-107)\nтишина: 100 примеров (уровень 78-100)" />
-
-    <CheckBox
-        android:id="@+id/checkBoxBalanceDataset"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/balanceTrainingDataset"
-        android:textAppearance="?attr/textAppearanceBodyLarge"
-        app:layout_constraintBottom_toTopOf="@id/layoutTrainingActions"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tvTrainingDatasetStats" />
-
-    <LinearLayout
-        android:id="@+id/layoutTrainingActions"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <Button
-            android:id="@+id/btnStartTraining"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="@string/startTraining" />
-
-        <FrameLayout
-            android:id="@+id/layoutTrainingProgress"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <ProgressBar
-                android:id="@+id/progressTrainingFiles"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:indeterminate="false"
-                android:max="1"
-                android:progress="0"
-                android:progressDrawable="@drawable/progress_training_files" />
-
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingBottom="8dp">
+    <FrameLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"><TextView
+    android:id="@+id/trainingTitle"
+    style="@style/QuietTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_trainingTitle" />
+    <ImageButton
+    android:id="@+id/btnClearTrainingDataset"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:layout_gravity="end"
+    android:src="@drawable/ic_more"
+    app:tint="@color/ui_text"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="@string/clearTrainingDataset" />
+    </FrameLayout><androidx.core.widget.NestedScrollView
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:fillViewport="true">
+        <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+            <ImageView
+    android:id="@+id/trainingIllustration"
+    android:layout_width="match_parent"
+    android:layout_height="112dp"
+    android:layout_marginTop="24dp"
+    android:src="@drawable/training_model"
+    android:scaleType="fitCenter"
+    android:importantForAccessibility="no" />
             <TextView
-                android:id="@+id/tvTrainingProgress"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="@string/trainingInProgress"
-                android:textAppearance="?attr/textAppearanceLabelLarge"
-                android:textColor="#7A726F" />
-
-        </FrameLayout>
-
+    android:id="@+id/tvTrainingStatusCircle"
+    style="@style/QuietTitle"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_tvTrainingStatusCircle"
+    android:gravity="center" />
+            <TextView
+    android:id="@+id/trainingMetrics"
+    style="@style/QuietBody"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_trainingMetrics"
+    android:gravity="center" />
+            <TextView
+    android:id="@+id/datasetHeading"
+    style="@style/QuietHeading"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_datasetHeading" />
+            <TextView
+    android:id="@+id/tvTrainingDatasetStats"
+    style="@style/QuietBody"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_tvTrainingDatasetStats" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+    <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
         <Button
-            android:id="@+id/btnClearTrainingDataset"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="16dp"
-            android:text="@string/clearTrainingDataset"
-            android:visibility="gone"
-            tools:visibility="visible" />
-
+    android:id="@+id/btnStartTraining"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="48dp"
+    android:text="@string/quiet_btnStartTraining" />
+        <LinearLayout
+    android:id="@+id/layoutTrainingProgress"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:visibility="gone">
+            <ProgressBar
+    android:id="@+id/progressTrainingFiles"
+    style="?android:attr/progressBarStyleHorizontal"
+    android:layout_width="match_parent"
+    android:layout_height="24dp" />
+            <TextView
+    android:id="@+id/tvTrainingProgress"
+    style="@style/QuietBody"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/quiet_tvTrainingProgress" />
+        </LinearLayout>
     </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

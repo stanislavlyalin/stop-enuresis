@@ -68,7 +68,6 @@ class TrainingRepository(
     }
 
     fun train(
-        balanceDataset: Boolean,
         onProgress: (TrainingProgress) -> Unit = {}
     ): TrainingResult {
         val labeledFiles = listSampleFiles()
@@ -81,20 +80,8 @@ class TrainingRepository(
             "At least $MIN_SAMPLES_PER_CLASS samples per class are required"
         }
 
-        val balancedSampleCount = minOf(positives.size, negatives.size)
-        val trainingPositives = if (balanceDataset) {
-            positives.shuffled(random).take(balancedSampleCount)
-        } else {
-            positives
-        }
-        val trainingNegatives = if (balanceDataset) {
-            negatives.shuffled(random).take(balancedSampleCount)
-        } else {
-            negatives
-        }
-
-        val positiveSplit = splitClassSamples(trainingPositives, random)
-        val negativeSplit = splitClassSamples(trainingNegatives, random)
+        val positiveSplit = splitClassSamples(positives, random)
+        val negativeSplit = splitClassSamples(negatives, random)
         val trainSet = (positiveSplit.first + negativeSplit.first).shuffled(random)
         val testSet = (positiveSplit.second + negativeSplit.second).shuffled(random)
         val totalFeatureFiles = trainSet.size + testSet.size

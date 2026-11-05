@@ -26,12 +26,11 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
     private lateinit var tvTrainingStatusCircle: TextView
     private lateinit var tvTrainingDatasetStats: TextView
-    private lateinit var checkBoxBalanceDataset: CheckBox
     private lateinit var btnStartTraining: Button
     private lateinit var layoutTrainingProgress: View
     private lateinit var progressTrainingFiles: ProgressBar
     private lateinit var tvTrainingProgress: TextView
-    private lateinit var btnClearTrainingDataset: Button
+    private lateinit var btnClearTrainingDataset: android.widget.ImageButton
     private lateinit var trainingRepository: TrainingRepository
 
     private var isTraining = false
@@ -43,7 +42,6 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
         tvTrainingStatusCircle = view.findViewById(R.id.tvTrainingStatusCircle)
         tvTrainingDatasetStats = view.findViewById(R.id.tvTrainingDatasetStats)
-        checkBoxBalanceDataset = view.findViewById(R.id.checkBoxBalanceDataset)
         btnStartTraining = view.findViewById(R.id.btnStartTraining)
         layoutTrainingProgress = view.findViewById(R.id.layoutTrainingProgress)
         progressTrainingFiles = view.findViewById(R.id.progressTrainingFiles)
@@ -56,8 +54,12 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         )
 
         btnStartTraining.setOnClickListener { startTraining() }
-        btnClearTrainingDataset.setOnClickListener { showClearDatasetDialog() }
-        checkBoxBalanceDataset.setOnCheckedChangeListener { _, _ -> refreshUi() }
+        btnClearTrainingDataset.setOnClickListener { anchor ->
+            android.widget.PopupMenu(requireContext(), anchor).apply {
+                menu.add(R.string.clearTrainingDataset).setOnMenuItemClickListener { showClearDatasetDialog(); true }
+                show()
+            }
+        }
 
         refreshUi()
     }
@@ -69,28 +71,28 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
     private fun refreshUi() {
         val stats = trainingRepository.getDatasetStats()
-        val visibleStats = getVisibleDatasetStats(stats)
+        val visibleStats = stats
         val modelAccuracy = lastAccuracy ?: trainingRepository.readModelAccuracy()
         val hasModel = trainingRepository.hasModel()
 
         tvTrainingDatasetStats.text = formatDatasetStats(visibleStats)
         tvTrainingStatusCircle.text = when {
             isTraining -> getString(R.string.trainingInProgress)
-            hasModel -> getString(
-                R.string.modelTrainedWithAccuracy,
-                ((modelAccuracy ?: 0.0) * 100.0).roundToInt()
-            )
+            hasModel -> getString(R.string.quiet_model_trained)
             else -> getString(R.string.modelNotTrained)
         }
 
+        requireView().findViewById<View>(R.id.trainingIllustration).visibility = if (hasModel && !isTraining) View.VISIBLE else View.GONE
+        requireView().findViewById<TextView>(R.id.trainingMetrics).text = if (hasModel && modelAccuracy != null) {
+            getString(R.string.quiet_metrics, (modelAccuracy * 100).roundToInt(), com.stanislavlyalin.stopenuresis.AppSettings.getVolumeThreshold(requireContext()))
+        } else ""
         btnStartTraining.isEnabled = !isTraining
         btnStartTraining.visibility = if (isTraining) View.GONE else View.VISIBLE
         layoutTrainingProgress.visibility = if (isTraining) View.VISIBLE else View.GONE
-        checkBoxBalanceDataset.isEnabled = !isTraining
         btnStartTraining.text = if (isTraining) {
             getString(R.string.trainingInProgress)
         } else {
-            getString(R.string.startTraining)
+            if (hasModel) getString(R.string.quiet_btnStartTraining) else getString(R.string.startTraining)
         }
         updateTrainingProgress()
         btnClearTrainingDataset.visibility = if (hasModel && !isTraining) View.VISIBLE else View.GONE
@@ -100,7 +102,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         if (isTraining) return
 
         val stats = trainingRepository.getDatasetStats()
-        val effectiveStats = getVisibleDatasetStats(stats)
+        val effectiveStats = stats
         if (
             effectiveStats.positiveCount < MIN_SAMPLES_PER_CLASS ||
             effectiveStats.negativeCount < MIN_SAMPLES_PER_CLASS
@@ -113,7 +115,6 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
             return
         }
 
-        val balanceDataset = checkBoxBalanceDataset.isChecked
         val existingAccuracy = trainingRepository.readModelAccuracy()
         isTraining = true
         trainingProgress = TrainingProgress(
@@ -125,7 +126,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         thread(start = true, name = "ModelTrainingThread") {
             val result = runCatching {
                 trainingRepository.train(
-                    balanceDataset = balanceDataset,
+
                     onProgress = { progress -> postTrainingProgress(progress) }
                 )
             }
@@ -208,46 +209,9 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
     }
 
     private fun formatDatasetStats(stats: TrainingDatasetStats): CharSequence {
-        return SpannableStringBuilder().apply {
-            append(getString(R.string.trainingDatasetTitle))
-            append('\n')
-            appendDatasetLine(
-                line = getString(R.string.trainingDatasetPositiveLine, stats.positiveCount),
-                levelRange = stats.positiveLevelRange,
-                levelColor = Color.RED
-            )
-            append('\n')
-            appendDatasetLine(
-                line = getString(R.string.trainingDatasetNegativeLine, stats.negativeCount),
-                levelRange = stats.negativeLevelRange,
-                levelColor = Color.rgb(0, 140, 0)
-            )
-        }
-    }
-
-    private fun SpannableStringBuilder.appendDatasetLine(
-        line: String,
-        levelRange: IntRange?,
-        levelColor: Int
-    ) {
-        append(line)
-        if (levelRange == null) return
-
-        val start = length
-        append(' ')
-        append(
-            getString(
-                R.string.trainingDatasetLevelRange,
-                levelRange.first,
-                levelRange.last
-            )
-        )
-        setSpan(
-            ForegroundColorSpan(levelColor),
-            start,
-            length,
-            Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
+        fun range(value: IntRange?): String = value?.let { "${it.first}-${it.last}" } ?: "-"
+        return getString(R.string.quiet_dataset_summary, stats.positiveCount, range(stats.positiveLevelRange),
+            stats.negativeCount, range(stats.negativeLevelRange), stats.positiveCount + stats.negativeCount)
     }
 
     private fun postTrainingProgress(progress: TrainingProgress) {
@@ -272,16 +236,6 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
             maxProgress
         )
         tvTrainingProgress.text = getString(R.string.trainingInProgress)
-    }
-
-    private fun getVisibleDatasetStats(stats: TrainingDatasetStats): TrainingDatasetStats {
-        if (!checkBoxBalanceDataset.isChecked) return stats
-
-        val balancedCount = minOf(stats.positiveCount, stats.negativeCount)
-        return stats.copy(
-            positiveCount = balancedCount,
-            negativeCount = balancedCount
-        )
     }
 
     private companion object {

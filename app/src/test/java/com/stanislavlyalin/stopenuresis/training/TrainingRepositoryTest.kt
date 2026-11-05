@@ -51,7 +51,7 @@ class TrainingRepositoryTest {
         val progressEvents = mutableListOf<TrainingProgress>()
 
         runCatching {
-            repository.train(balanceDataset = false) { progressEvents.add(it) }
+            repository.train() { progressEvents.add(it) }
         }
 
         assertTrue(progressEvents.isNotEmpty())
