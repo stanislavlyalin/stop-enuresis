@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="onboarding_background">#14110D</color>
+    <color name="onboarding_background_end">#21170E</color>
+    <color name="onboarding_card">#30251A</color>
+    <color name="onboarding_back_card">#40301D</color>
+    <color name="onboarding_title">#FFF2CC</color>
+    <color name="onboarding_body">#EEDBB3</color>
+    <color name="onboarding_outline">#806135</color>
+    <color name="onboarding_dot_inactive">#7A6545</color>
+</resources>

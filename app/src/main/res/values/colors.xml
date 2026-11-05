@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="onboarding_background">#FFF8EA</color>
+    <color name="onboarding_background_end">#FFF2DF</color>
+    <color name="onboarding_card">#FFF2CC</color>
+    <color name="onboarding_back_card">#FFE7AC</color>
+    <color name="onboarding_title">#1F1400</color>
+    <color name="onboarding_body">#674718</color>
+    <color name="onboarding_outline">#E6BA69</color>
+    <color name="onboarding_dot_inactive">#D9BE8B</color>
     <color name="alarm_background">#100C07</color>
     <color name="alarm_track">#402907</color>
     <color name="alarm_gold">#FFCF64</color>

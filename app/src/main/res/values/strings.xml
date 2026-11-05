@@ -1,4 +1,23 @@
 <resources>
+    <string name="onboardingWelcomeTitle">Поможем проснуться вовремя</string>
+    <string name="onboardingWelcomeBody">Приложение распознаёт звуки ёрзания. Будильник помогает ребёнку проснуться и сходить в туалет.</string>
+    <string name="onboardingWelcomeHint">Работает без интернета и регистрации. Записи остаются на телефоне.</string>
+    <string name="onboardingSamplesTitle">Сначала соберём примеры</string>
+    <string name="onboardingSamplesBody">Запишите звуки рядом с кроватью ребёнка. Прослушайте фрагменты и отметьте, где ребёнок ёрзает, а где слышны другие звуки.</string>
+    <string name="onboardingSamplesHint">К тишине относите и посторонние звуки: разговоры, кашель, шум за окном.</string>
+    <string name="onboardingTrainingTitle">Обучим приложение</string>
+    <string name="onboardingTrainingBody">На вкладке \"Обучение\" нажмите \"Начать обучение\". Приложение научится различать ёрзание и остальные звуки по вашим примерам.</string>
+    <string name="onboardingTrainingHint">Позже можно добавить новые примеры и повторить обучение.</string>
+    <string name="onboardingBedtimeTitle">Подготовимся ко сну</string>
+    <string name="onboardingBedtimeBody">Поставьте телефон рядом с кроватью. На вкладке \"Запуск\" нажмите \"Начать слушать\". После защитной паузы приложение автоматически включит прослушивание.</string>
+    <string name="onboardingBedtimeHint">По умолчанию пауза длится 1 час. Во время неё микрофон отключён.</string>
+    <string name="onboardingAlarmTitle">Проснулись? Пора в туалет</string>
+    <string name="onboardingAlarmBody">Когда зазвучит будильник, потяните малыша к горшку, чтобы выключить звук. После новой защитной паузы прослушивание возобновится автоматически.</string>
+    <string name="onboardingAlarmHint">Одинаковая пауза действует после запуска и выключения будильника. Её длительность меняется в настройках.</string>
+    <string name="onboardingSkip">Пропустить</string>
+    <string name="onboardingNext">Далее</string>
+    <string name="onboardingFinish">Начать знакомство</string>
+    <string name="onboardingPage">Экран %1$d из %2$d</string>
     <string name="app_name">Стоп Энурез</string>
     <string name="about">О программе</string>
     <string name="collectData">Сбор данных</string>
