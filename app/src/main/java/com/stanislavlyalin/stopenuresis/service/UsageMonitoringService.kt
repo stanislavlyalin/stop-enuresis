@@ -120,6 +120,7 @@ class UsageMonitoringService : Service() {
         cycle.stop()
         cooldownUntilWallClockMillis = 0L
         broadcastStatus()
+        getSystemService(NotificationManager::class.java).cancel(ALARM_NOTIFICATION_ID)
         releaseWakeLock()
         super.onDestroy()
     }
@@ -300,6 +301,7 @@ class UsageMonitoringService : Service() {
         cooldownUntilWallClockMillis = 0L
         broadcastStatus()
         releaseWakeLock()
+        getSystemService(NotificationManager::class.java).cancel(ALARM_NOTIFICATION_ID)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -335,9 +337,15 @@ class UsageMonitoringService : Service() {
     private fun updateNotification() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.notify(NOTIFICATION_ID, buildNotification())
+        // Полноэкранное действие запускается новым уведомлением, а не обновлением статуса сервиса.
+        if (usageState == STATE_ALARMING) {
+            manager.notify(ALARM_NOTIFICATION_ID, buildNotification(alarming = true))
+        } else {
+            manager.cancel(ALARM_NOTIFICATION_ID)
+        }
     }
 
-    private fun buildNotification(): Notification {
+    private fun buildNotification(alarming: Boolean = false): Notification {
         val intent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -352,9 +360,9 @@ class UsageMonitoringService : Service() {
                 .format(Date(cooldownUntilWallClockMillis)))
             else -> getString(R.string.usageMonitoringNotificationText)
         }
-        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(this, if (alarming) CHANNEL_ID else STATUS_CHANNEL_ID)
             .setSmallIcon(
-                if (usageState == STATE_ALARMING) {
+                if (alarming) {
                     android.R.drawable.ic_dialog_alert
                 } else {
                     android.R.drawable.ic_media_play
@@ -362,18 +370,18 @@ class UsageMonitoringService : Service() {
             )
             .setContentTitle(getString(R.string.usageNotificationTitle))
             .setContentText(text)
-            .setContentIntent(pendingIntent)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setOngoing(usageState != STATE_ALARMING)
-            .setOnlyAlertOnce(usageState != STATE_ALARMING)
+            .setContentIntent(if (alarming) alarmFullScreenPendingIntent() else pendingIntent)
+            .setCategory(if (alarming) NotificationCompat.CATEGORY_ALARM else NotificationCompat.CATEGORY_SERVICE)
+            .setOngoing(!alarming)
+            .setOnlyAlertOnce(!alarming)
             .setPriority(
-                if (usageState == STATE_ALARMING) {
+                if (alarming) {
                     NotificationCompat.PRIORITY_HIGH
                 } else {
                     NotificationCompat.PRIORITY_LOW
                 }
             )
-        if (usageState == STATE_ALARMING) {
+        if (alarming) {
             notificationBuilder
                 .setFullScreenIntent(alarmFullScreenPendingIntent(), true)
                 .setDeleteIntent(alarmStopPendingIntent())
@@ -416,6 +424,9 @@ class UsageMonitoringService : Service() {
             NotificationManager.IMPORTANCE_HIGH
         )
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
+        getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(
+            STATUS_CHANNEL_ID, getString(R.string.usageMonitoringChannel), NotificationManager.IMPORTANCE_LOW
+        ))
     }
 
     private fun acquireWakeLock() {
@@ -484,7 +495,9 @@ class UsageMonitoringService : Service() {
         private const val ACTION_REQUEST_STATUS =
             "com.stanislavlyalin.stopenuresis.action.REQUEST_USAGE_STATUS"
         private const val CHANNEL_ID = "usage_monitoring"
+        private const val STATUS_CHANNEL_ID = "usage_monitoring_status"
         private const val NOTIFICATION_ID = 1002
+        private const val ALARM_NOTIFICATION_ID = 1003
 
         private const val SAMPLE_RATE = 16000
         private const val CHANNEL_COUNT = 1

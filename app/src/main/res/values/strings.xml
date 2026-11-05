@@ -86,8 +86,9 @@
     <string name="startListening">Начать слушать</string>
     <string name="stopListening">Остановить</string>
     <string name="turnOffAlarm">Выключить будильник</string>
-    <string name="alarmLockScreenTitle">Будильник</string>
-    <string name="alarmLockScreenInstruction">Проведите пальцем в сторону, чтобы выключить звук</string>
+    <string name="alarmLockScreenTitle">Пора в туалет</string>
+    <string name="alarmLockScreenInstruction">Потяни малыша к горшку</string>
+    <string name="alarmDismissLabel">Выключить</string>
     <string name="fullScreenAlarmPermissionTitle">Будильник на экране блокировки</string>
     <string name="fullScreenAlarmPermissionMessage">Разрешите полноэкранный будильник, чтобы выключать его жестом на заблокированном телефоне.</string>
     <string name="openSettings">Открыть настройки</string>
@@ -97,7 +98,8 @@
     <string name="dataCollectionNotificationChannel">Сбор данных</string>
     <string name="dataCollectionNotificationTitle">Идёт запись данных</string>
     <string name="dataCollectionNotificationText">тишина: %1$d, ёрзает: %2$d</string>
-    <string name="usageNotificationChannel">Запуск</string>
+    <string name="usageNotificationChannel">Будильник</string>
+    <string name="usageMonitoringChannel">Прослушивание</string>
     <string name="usageNotificationTitle">Мониторинг</string>
     <string name="usageMonitoringNotificationText">Приложение слушает микрофон</string>
     <string name="usageAlarmNotificationText">Сработал будильник. Смахните уведомление либо нажмите кнопку выключения.</string>

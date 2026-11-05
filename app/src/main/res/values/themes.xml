@@ -19,6 +19,8 @@
 
     <style name="Theme.StopEnuresis.Alarm" parent="Theme.StopEnuresis">
         <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@color/alarm_background</item>
+        <item name="android:navigationBarColor">@color/alarm_background</item>
     </style>
 
     <style name="BottomNavigationItemText">

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item><shape><solid android:color="@color/alarm_background" /></shape></item>
+    <item>
+        <shape>
+            <gradient android:type="radial" android:centerX="0.5" android:centerY="0.9"
+                android:gradientRadius="360dp" android:startColor="#60401905"
+                android:endColor="#00401905" />
+        </shape>
+    </item>
+</layer-list>

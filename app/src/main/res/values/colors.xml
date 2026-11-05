@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="alarm_background">#100C07</color>
+    <color name="alarm_track">#402907</color>
+    <color name="alarm_gold">#FFCF64</color>
+    <color name="alarm_cream">#FFF2CC</color>
     <color name="brand_orange">#FEA707</color>
     <color name="brand_orange_dark">#B86F00</color>
     <color name="brand_orange_light">#FFF2CC</color>

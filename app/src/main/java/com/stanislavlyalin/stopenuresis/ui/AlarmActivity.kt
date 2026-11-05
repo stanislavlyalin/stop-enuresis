@@ -7,18 +7,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.view.MotionEvent
-import android.view.View
+import android.util.TypedValue
 import android.view.WindowManager
+import android.widget.TextClock
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.core.view.doOnLayout
 import com.stanislavlyalin.stopenuresis.R
 import com.stanislavlyalin.stopenuresis.service.UsageMonitoringService
-import kotlin.math.abs
 
 class AlarmActivity : Activity() {
-
-    private var touchStartX = 0f
-    private val swipeDistance by lazy { resources.displayMetrics.density * SWIPE_DISTANCE_DP }
 
     private val alarmStatusReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -34,9 +32,18 @@ class AlarmActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         showOverLockScreen()
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         setContentView(R.layout.activity_alarm)
-        findViewById<View>(R.id.alarmScreen).setOnTouchListener { _, event ->
-            handleSwipe(event)
+        WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightNavigationBars = false
+        findViewById<TextClock>(R.id.alarmClock).doOnLayout {
+            val clock = it as TextClock
+            val textWidth = clock.paint.measureText(clock.text.toString())
+            if (textWidth > clock.width) {
+                clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, clock.textSize * clock.width / textWidth)
+            }
+        }
+        findViewById<AlarmDismissView>(R.id.alarmDismiss).onDismiss = {
+            UsageMonitoringService.turnOffAlarm(this)
         }
     }
 
@@ -70,20 +77,4 @@ class AlarmActivity : Activity() {
         }
     }
 
-    private fun handleSwipe(event: MotionEvent): Boolean {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> touchStartX = event.x
-            MotionEvent.ACTION_UP -> {
-                if (abs(event.x - touchStartX) >= swipeDistance) {
-                    UsageMonitoringService.turnOffAlarm(this)
-                    finish()
-                }
-            }
-        }
-        return true
-    }
-
-    private companion object {
-        const val SWIPE_DISTANCE_DP = 96f
-    }
 }
