@@ -23,6 +23,11 @@ import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
 class TrainingFragment : Fragment(R.layout.fragment_training) {
+    companion object {
+        @Volatile var isTrainingNow = false
+            private set
+    }
+
 
     private lateinit var tvTrainingStatusCircle: TextView
     private lateinit var tvTrainingDatasetStats: TextView
@@ -114,6 +119,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
         val existingAccuracy = trainingRepository.readModelAccuracy()
         isTraining = true
+        isTrainingNow = true
         trainingProgress = TrainingProgress(
             processedFiles = 0,
             totalFiles = effectiveStats.positiveCount + effectiveStats.negativeCount
@@ -128,6 +134,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
                 )
             }
 
+            isTrainingNow = false
             activity?.runOnUiThread {
                 if (!isAdded || view == null) return@runOnUiThread
 

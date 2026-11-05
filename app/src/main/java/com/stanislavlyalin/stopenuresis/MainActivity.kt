@@ -33,6 +33,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var navController: NavController
 
+    private val reviewPrompt by lazy {
+        com.stanislavlyalin.stopenuresis.review.ReviewPrompt(this, {
+            navController.currentDestination?.id in setOf(R.id.usageFragment, R.id.aboutFragment) &&
+                unavailableDialog?.isShowing != true
+        }, { repository().readModelAccuracy() })
+    }
+
     private var datasetCounts = TrainingDatasetStats(0, 0)
     private var modelAvailable = false
     private var unavailableDialog: androidx.appcompat.app.AlertDialog? = null
@@ -69,6 +76,7 @@ class MainActivity : AppCompatActivity() {
             if (!isAvailable(destination.id)) {
                 window.decorView.post { refreshNavigationAvailability() }
             }
+            reviewPrompt.schedule()
             val tour = destination.id == R.id.onboardingFragment
             bottomNavigationView.visibility = if (tour) View.GONE else View.VISIBLE
             val background = getColor(if (tour) R.color.onboarding_background else R.color.brand_surface)
@@ -85,6 +93,23 @@ class MainActivity : AppCompatActivity() {
                 R.id.trainingFragment, R.id.usageFragment, R.id.settingsFragment, R.id.onboardingFragment) }
         setStartDestination(restoredDestination?.takeIf { isAvailable(it) } ?: getStartDestination())
         updateDataCollectionNavTitle()
+    }
+
+    override fun onPostResume() { super.onPostResume(); reviewPrompt.schedule() }
+
+    override fun onPause() { reviewPrompt.pause(); super.onPause() }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) reviewPrompt.schedule() else reviewPrompt.cancel()
+    }
+
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean {
+        if (event.actionMasked == android.view.MotionEvent.ACTION_DOWN) reviewPrompt.touch(true)
+        val handled = super.dispatchTouchEvent(event)
+        if (event.actionMasked == android.view.MotionEvent.ACTION_UP ||
+            event.actionMasked == android.view.MotionEvent.ACTION_CANCEL) reviewPrompt.touch(false)
+        return handled
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -184,6 +209,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        reviewPrompt.dispose()
         unavailableDialog?.dismiss()
         unavailableDialog = null
         super.onDestroy()

@@ -83,8 +83,15 @@ internal class ReviewHistory(context: Context) {
         return prefs.edit().putString("preparation_date", today).commit()
     }
 
-    fun reserveAttempt(now: Long): Boolean = prefs.edit().putLong("last_attempt_at", now)
-        .putInt("attempt_count", prefs.getInt("attempt_count", 0) + 1).commit()
+    fun reserveAttempt(now: Long, stillReady: () -> Boolean): Boolean {
+        val previousAt = prefs.getLong("last_attempt_at", 0)
+        val previousCount = prefs.getInt("attempt_count", 0)
+        if (!prefs.edit().putLong("last_attempt_at", now).putInt("attempt_count", previousCount + 1).commit()) return false
+        if (stillReady()) return true
+        // Форма не запускалась: возвращаем неиспользованную попытку.
+        prefs.edit().putLong("last_attempt_at", previousAt).putInt("attempt_count", previousCount).commit()
+        return false
+    }
 
     fun reviewExists() { prefs.edit().putBoolean("review_exists", true).commit() }
 }
