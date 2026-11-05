@@ -69,4 +69,4 @@
     <string
     name="quiet_mic_off">Микрофон отключён</string>
 <string
-    name="quiet_recording">Сбор данных · Запись</string></resources>
+    name="quiet_recording">Сбор данных · Запись</string><string name="quiet_save_fragments">Сохранять фрагменты</string></resources>

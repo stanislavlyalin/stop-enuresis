@@ -40,7 +40,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
     private lateinit var layoutRustlingDetections: LinearLayout
     private lateinit var tvNextAlarmAllowed: TextView
     private lateinit var btnUsageMain: Button
-    private lateinit var cbSaveSamples: CheckBox
+    private lateinit var cbSaveSamples: com.google.android.material.materialswitch.MaterialSwitch
     private var usageState = UsageState.IDLE
     private var cooldownUntilWallClockMillis = 0L
     private var rustlingEpisodeCount = 0
@@ -203,13 +203,17 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
 
     private fun setUsageState(state: UsageState) {
         usageState = state
+        requireView().findViewById<View>(R.id.sleepIllustration).visibility =
+            if (state == UsageState.ALARMING) View.GONE else View.VISIBLE
         tvUsageStatusCircle.text = when (state) {
-            UsageState.IDLE -> getString(R.string.usageHello)
+            UsageState.IDLE -> getString(R.string.quiet_ready)
             UsageState.MONITORING -> getString(R.string.usageSleeping)
             UsageState.ALARMING -> getString(R.string.usageGoToToilet)
             UsageState.PAUSED -> getString(R.string.usagePaused)
         }
 
+        requireView().findViewById<TextView>(R.id.usageMicrophone).text =
+            getString(if (state == UsageState.MONITORING) R.string.quiet_mic_on else R.string.quiet_mic_off)
         btnUsageMain.text = when (state) {
             UsageState.IDLE -> getString(R.string.startListening)
             UsageState.MONITORING -> getString(R.string.stopListening)
@@ -236,7 +240,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
             val color = if (index < activeCount) {
                 ContextCompat.getColor(requireContext(), R.color.brand_orange)
             } else {
-                Color.rgb(190, 190, 190)
+                requireContext().getColor(R.color.ui_divider)
             }
             layoutRustlingDetections.getChildAt(index).background =
                 GradientDrawable().apply {
@@ -253,7 +257,7 @@ class UsageFragment : Fragment(R.layout.fragment_usage) {
         repeat(requiredCount) {
             layoutRustlingDetections.addView(
                 View(requireContext()),
-                LinearLayout.LayoutParams(dp(44), dp(64)).apply {
+                LinearLayout.LayoutParams(0, dp(12), 1f).apply {
                     marginStart = dp(4)
                     marginEnd = dp(4)
                 }
