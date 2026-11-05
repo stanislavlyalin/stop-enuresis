@@ -1,5 +1,6 @@
 import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import java.io.ByteArrayOutputStream
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -18,6 +19,11 @@ fun gitCommitHash(): String {
 }
 
 val currentGitCommit = gitCommitHash()
+val signingPropertiesFile = rootProject.file("signing.properties")
+val releaseSigningProperties = Properties().apply {
+    if (signingPropertiesFile.isFile) signingPropertiesFile.inputStream().use { load(it) }
+}
+val requiredSigningFields = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
 
 android {
     namespace = "com.stanislavlyalin.stopenuresis"
@@ -34,10 +40,20 @@ android {
         buildConfigField("String", "GIT_COMMIT", "\"$currentGitCommit\"")
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = releaseSigningProperties.getProperty("storeFile")
+                ?.takeIf { it.isNotBlank() }?.let { rootProject.file(it) }
+            storePassword = releaseSigningProperties.getProperty("storePassword")
+            keyAlias = releaseSigningProperties.getProperty("keyAlias")
+            keyPassword = releaseSigningProperties.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -75,4 +91,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+}
+
+// Ошибка относится только к релизным задачам: отладочная сборка не требует ключа.
+tasks.matching { it.name == "preReleaseBuild" }.configureEach {
+    doFirst {
+        require(signingPropertiesFile.isFile && requiredSigningFields.all {
+            !releaseSigningProperties.getProperty(it).isNullOrBlank()
+        }) { "Для релизной сборки заполните storeFile, storePassword, keyAlias и keyPassword в signing.properties" }
+    }
 }
