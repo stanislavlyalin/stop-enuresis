@@ -8,7 +8,7 @@
         <item name="colorOnPrimaryContainer">@color/brand_on_orange</item>
         <item name="colorSecondary">@color/brand_orange_dark</item>
         <item name="colorOnSecondary">@color/white</item>
-        <item name="colorSurface">@color/brand_surface</item>
+        <item name="colorSecondaryContainer">@color/brand_orange_light</item><item name="colorOnSecondaryContainer">@color/brand_on_orange</item><item name="materialButtonStyle">@style/QuietButton</item><item name="colorSurface">@color/brand_surface</item>
         <item name="colorOnSurface">@color/ui_text</item>
         <item name="android:textColorPrimary">@color/ui_text</item>
         <item name="android:textColorSecondary">@color/ui_secondary</item>

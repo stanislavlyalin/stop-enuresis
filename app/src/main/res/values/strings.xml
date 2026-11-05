@@ -24,11 +24,11 @@
     <string name="training">Обучение</string>
     <string name="usage">Использование</string>
     <string name="settings">Настройки</string>
-    <string name="bottomNavAbout">О ПРОГРАММЕ</string>
-    <string name="bottomNavCollectData">СБОР ДАННЫХ</string>
-    <string name="bottomNavTraining">ОБУЧЕНИЕ</string>
-    <string name="bottomNavUsage">ЗАПУСК</string>
-    <string name="bottomNavSettings">НАСТРОЙКИ</string>
+    <string name="bottomNavAbout">О программе</string>
+    <string name="bottomNavCollectData">Сбор данных</string>
+    <string name="bottomNavTraining">Обучение</string>
+    <string name="bottomNavUsage">Запуск</string>
+    <string name="bottomNavSettings">Настройки</string>
     <string name="bottomNavCollectDataCounter">(%1$d)</string>
     <string name="volumeThreshold">Порог срабатывания</string>
     <string name="volumeThresholdValue">Порог срабатывания: %1$d</string>
