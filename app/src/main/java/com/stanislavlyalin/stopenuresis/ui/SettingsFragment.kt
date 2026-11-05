@@ -189,6 +189,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
             modelFile.writeText(JSONObject(jsonText).toString(2))
         }.isSuccess
 
+        if (imported) (activity as? com.stanislavlyalin.stopenuresis.MainActivity)?.refreshNavigationAvailability()
         Toast.makeText(
             requireContext(),
             getString(

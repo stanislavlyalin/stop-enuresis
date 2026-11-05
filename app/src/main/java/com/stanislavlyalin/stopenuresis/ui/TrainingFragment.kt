@@ -103,10 +103,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
 
         val stats = trainingRepository.getDatasetStats()
         val effectiveStats = stats
-        if (
-            effectiveStats.positiveCount < MIN_SAMPLES_PER_CLASS ||
-            effectiveStats.negativeCount < MIN_SAMPLES_PER_CLASS
-        ) {
+        if (!effectiveStats.hasEnoughSamples) {
             Toast.makeText(
                 requireContext(),
                 getString(R.string.notEnoughTrainingSamples),
@@ -185,6 +182,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         runCatching {
             trainingRepository.saveModel(result)
         }.onSuccess {
+            (activity as? com.stanislavlyalin.stopenuresis.MainActivity)?.refreshNavigationAvailability()
             lastAccuracy = result.accuracy
             refreshUi()
         }.onFailure {
@@ -203,6 +201,7 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
             .setPositiveButton(R.string.confirm) { _, _ ->
                 trainingRepository.clearDataset()
                 refreshUi()
+                (activity as? com.stanislavlyalin.stopenuresis.MainActivity)?.refreshNavigationAvailability()
             }
             .setNegativeButton(R.string.cancel, null)
             .show()
@@ -238,7 +237,4 @@ class TrainingFragment : Fragment(R.layout.fragment_training) {
         tvTrainingProgress.text = getString(R.string.trainingInProgress)
     }
 
-    private companion object {
-        const val MIN_SAMPLES_PER_CLASS = 2
-    }
 }

@@ -12,7 +12,10 @@ data class TrainingDatasetStats(
     val negativeCount: Int,
     val positiveLevelRange: IntRange? = null,
     val negativeLevelRange: IntRange? = null
-)
+) {
+    val hasEnoughSamples: Boolean get() = positiveCount >= TrainingRepository.MIN_SAMPLES_PER_CLASS &&
+        negativeCount >= TrainingRepository.MIN_SAMPLES_PER_CLASS
+}
 
 data class TrainingProgress(
     val processedFiles: Int,
@@ -31,6 +34,11 @@ class TrainingRepository(
     private val acousticFeatureExtractor = AcousticFeatureExtractor()
     private val trainer = ExtraTreesTrainer()
     private val sampleLevelCache = mutableMapOf<String, CachedSampleLevel>()
+
+    fun getDatasetCounts(): TrainingDatasetStats {
+        val files = listSampleFiles()
+        return TrainingDatasetStats(files.count { getLabel(it) == 1 }, files.count { getLabel(it) == 0 })
+    }
 
     fun getDatasetStats(): TrainingDatasetStats {
         val files = listSampleFiles()
@@ -207,11 +215,11 @@ class TrainingRepository(
         return shuffled.take(trainCount) to shuffled.drop(trainCount)
     }
 
-    private companion object {
-        const val TRAIN_SPLIT = 0.7
+    companion object {
+        private const val TRAIN_SPLIT = 0.7
         const val MIN_SAMPLES_PER_CLASS = 2
-        const val LEVEL_RANGE_LOWER_PERCENTILE = 0.05
-        const val LEVEL_RANGE_UPPER_PERCENTILE = 0.95
+        private const val LEVEL_RANGE_LOWER_PERCENTILE = 0.05
+        private const val LEVEL_RANGE_UPPER_PERCENTILE = 0.95
     }
 
     private data class CachedSampleLevel(

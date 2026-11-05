@@ -18,6 +18,11 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.navigation.ui.NavigationUI
+import android.content.res.ColorStateList
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.stanislavlyalin.stopenuresis.training.TrainingRepository
+import com.stanislavlyalin.stopenuresis.training.TrainingDatasetStats
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.stanislavlyalin.stopenuresis.service.DataCollectionRecordingService
 import com.stanislavlyalin.stopenuresis.training.ExtraTreesModel
@@ -28,10 +33,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var bottomNavigationView: BottomNavigationView
     private lateinit var navController: NavController
 
+    private var datasetCounts = TrainingDatasetStats(0, 0)
+    private var modelAvailable = false
+    private var unavailableDialog: androidx.appcompat.app.AlertDialog? = null
+
+    private fun repository() = TrainingRepository(AppStorage.samplesDir(this), AppStorage.modelFile(this))
+
     private val samplesChangedReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action != DataCollectionRecordingService.ACTION_SAMPLES_CHANGED) return
-            updateDataCollectionNavTitle()
+            refreshNavigationAvailability()
         }
     }
 
@@ -47,7 +58,17 @@ class MainActivity : AppCompatActivity() {
         navController = navHostFragment.navController
         bottomNavigationView = findViewById(R.id.bottomNavigation)
         bottomNavigationView.setupWithNavController(navController)
+        bottomNavigationView.itemIconTintList = null
+        bottomNavigationView.setOnItemSelectedListener { item ->
+            refreshNavigationAvailability()
+            if (isAvailable(item.itemId)) NavigationUI.onNavDestinationSelected(item, navController)
+            else { showUnavailableDialog(item.itemId); false }
+        }
+        refreshNavigationAvailability()
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            if (!isAvailable(destination.id)) {
+                window.decorView.post { refreshNavigationAvailability() }
+            }
             val tour = destination.id == R.id.onboardingFragment
             bottomNavigationView.visibility = if (tour) View.GONE else View.VISIBLE
             val background = getColor(if (tour) R.color.onboarding_background else R.color.brand_surface)
@@ -62,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         val restoredDestination = savedInstanceState?.getInt("current_destination", 0)
             ?.takeIf { it in setOf(R.id.aboutFragment, R.id.dataCollectionFragment,
                 R.id.trainingFragment, R.id.usageFragment, R.id.settingsFragment, R.id.onboardingFragment) }
-        setStartDestination(restoredDestination ?: getStartDestination())
+        setStartDestination(restoredDestination?.takeIf { isAvailable(it) } ?: getStartDestination())
         updateDataCollectionNavTitle()
     }
 
@@ -74,7 +95,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         registerSamplesChangedReceiver()
-        updateDataCollectionNavTitle()
+        refreshNavigationAvailability()
     }
 
     override fun onStop() {
@@ -85,14 +106,14 @@ class MainActivity : AppCompatActivity() {
     private fun getStartDestination(): Int {
         if (!AppSettings.isOnboardingCompleted(this)) return R.id.onboardingFragment
 
-        if (!hasTrainingSamples()) return R.id.dataCollectionFragment
-        if (!hasTrainedModel()) return R.id.trainingFragment
-        return R.id.usageFragment
+        if (modelAvailable) return R.id.usageFragment
+        return if (datasetCounts.hasEnoughSamples) R.id.trainingFragment else R.id.dataCollectionFragment
     }
 
     fun completeOnboarding() {
         AppSettings.completeOnboarding(this)
-        setStartDestination(R.id.dataCollectionFragment)
+        refreshNavigationAvailability()
+        setStartDestination(getStartDestination())
     }
 
     private fun setStartDestination(destination: Int) {
@@ -101,24 +122,71 @@ class MainActivity : AppCompatActivity() {
         navController.graph = graph
     }
 
-    private fun hasTrainingSamples(): Boolean {
-        val samplesDir = AppStorage.samplesDir(this)
-        return samplesDir.listFiles { file ->
-            file.isFile && (
-                file.name.endsWith("_1.wav") ||
-                    file.name.endsWith("_1_unchecked.wav") ||
-                    file.name.endsWith("_1_detected_unchecked.wav") ||
-                    file.name.endsWith("_0.wav")
-                )
-        }?.isNotEmpty() == true
+    private fun isAvailable(destination: Int): Boolean = when (destination) {
+        R.id.trainingFragment -> datasetCounts.hasEnoughSamples
+        R.id.usageFragment -> modelAvailable
+        else -> true
     }
 
-    private fun hasTrainedModel(): Boolean {
-        val modelFile = AppStorage.modelFile(this)
-        if (!modelFile.exists()) return false
-        return runCatching {
-            ExtraTreesModel.fromJson(JSONObject(modelFile.readText()))
-        }.isSuccess
+    fun refreshNavigationAvailability() {
+        val repository = repository()
+        datasetCounts = repository.getDatasetCounts()
+        modelAvailable = repository.hasModel()
+        val checked = intArrayOf(android.R.attr.state_checked)
+        for (index in 0 until bottomNavigationView.menu.size()) {
+            val item = bottomNavigationView.menu.getItem(index)
+            val title = getString(when (item.itemId) {
+                R.id.trainingFragment -> R.string.bottomNavTraining
+                R.id.usageFragment -> R.string.bottomNavUsage
+                R.id.aboutFragment -> R.string.bottomNavAbout
+                R.id.settingsFragment -> R.string.bottomNavSettings
+                else -> R.string.bottomNavCollectData
+            })
+            val available = isAvailable(item.itemId)
+            val gray = getColor(R.color.nav_unavailable)
+            item.title = if (available) title else SpannableString(title).apply {
+                setSpan(ForegroundColorSpan(gray), 0, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            androidx.core.view.MenuItemCompat.setContentDescription(item,
+                if (available) title else getString(R.string.tabUnavailableDescription, title))
+            item.icon = item.icon?.constantState?.newDrawable()?.mutate()?.apply {
+                setTintList(if (available) ColorStateList(arrayOf(checked, intArrayOf()),
+                    intArrayOf(getColor(R.color.brand_orange), getColor(R.color.ui_secondary)))
+                    else ColorStateList.valueOf(gray))
+            }
+        }
+        updateDataCollectionNavTitle()
+        navController.currentDestination?.id?.let { current ->
+            if (!isAvailable(current)) setStartDestination(getStartDestination())
+        }
+    }
+
+    private fun showUnavailableDialog(destination: Int) {
+        if (unavailableDialog?.isShowing == true) return
+        val training = destination == R.id.trainingFragment
+        val message = if (training) getString(R.string.trainingUnavailableMessage,
+            TrainingRepository.MIN_SAMPLES_PER_CLASS, datasetCounts.positiveCount, datasetCounts.negativeCount)
+        else getString(R.string.usageUnavailableMessage) +
+            if (datasetCounts.hasEnoughSamples) "" else "\n\n" + getString(R.string.usageNeedsSamplesMessage,
+                TrainingRepository.MIN_SAMPLES_PER_CLASS)
+        unavailableDialog = MaterialAlertDialogBuilder(this)
+            .setBackground(android.graphics.drawable.GradientDrawable().apply {
+                setColor(getColor(R.color.brand_surface))
+                cornerRadius = 24 * resources.displayMetrics.density
+            })
+            .setTitle(if (training) R.string.trainingUnavailableTitle else R.string.usageUnavailableTitle)
+            .setMessage(message)
+            .setPositiveButton(R.string.unavailableOkay, null)
+            .show().also { dialog ->
+                dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextColor(getColor(R.color.ui_secondary))
+                dialog.findViewById<android.widget.TextView>(androidx.appcompat.R.id.alertTitle)?.setTextColor(getColor(R.color.ui_text))
+            }
+    }
+
+    override fun onDestroy() {
+        unavailableDialog?.dismiss()
+        unavailableDialog = null
+        super.onDestroy()
     }
 
     private fun registerSamplesChangedReceiver() {

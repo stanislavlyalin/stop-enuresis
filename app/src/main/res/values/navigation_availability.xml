@@ -1,0 +1,10 @@
+<resources>
+    <color name="nav_unavailable">#858079</color>
+    <string name="tabUnavailableDescription">%1$s. Пока недоступно</string>
+    <string name="trainingUnavailableTitle">Обучение пока недоступно</string>
+    <string name="trainingUnavailableMessage">Для обучения нужно не менее %1$d размеченных примеров каждого класса: \"Ёрзание\" и \"Тишина\".\n\nСейчас: ёрзание - %2$d, тишина - %3$d.\n\nРазметьте записи на вкладке \"Сбор данных\". Непроверенные записи не учитываются.</string>
+    <string name="usageUnavailableTitle">Запуск пока недоступен</string>
+    <string name="usageUnavailableMessage">Для запуска нужна обученная модель. Обучите её на вкладке \"Обучение\" или импортируйте готовую модель в настройках.</string>
+    <string name="usageNeedsSamplesMessage">Перед обучением разметьте минимум %1$d примера каждого класса.</string>
+    <string name="unavailableOkay">Хорошо</string>
+</resources>
