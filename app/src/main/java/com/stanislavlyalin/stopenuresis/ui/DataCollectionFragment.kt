@@ -752,13 +752,17 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude.axisLeft.textColor = requireContext().getColor(R.color.ui_secondary)
         lineChartAmplitude.xAxis.textColor = requireContext().getColor(R.color.ui_secondary)
         val axisLeft = lineChartAmplitude.axisLeft
+        axisLeft.setLabelCount(3, true)
+        axisLeft.setDrawGridLines(false)
         axisLeft.removeAllLimitLines()
 
         val thresholdLine = LimitLine(
             currentThreshold,
             getString(R.string.thresholdLabel, currentThreshold.toInt())
         )
-        thresholdLine.lineWidth = 2f
+        thresholdLine.lineColor = requireContext().getColor(R.color.brand_orange)
+        thresholdLine.textColor = requireContext().getColor(R.color.ui_secondary)
+        thresholdLine.lineWidth = 1f
         thresholdLine.enableDashedLine(12f, 8f, 0f)
 
         axisLeft.addLimitLine(thresholdLine)
