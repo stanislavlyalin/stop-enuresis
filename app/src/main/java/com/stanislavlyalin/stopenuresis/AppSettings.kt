@@ -13,6 +13,7 @@ object AppSettings {
 
     private const val PREFS_NAME = "stop_enuresis_settings"
     private const val KEY_ABOUT_SCREEN_SEEN = "about_screen_seen"
+    private const val KEY_ONBOARDING_COMPLETED = "onboarding_completed"
     private const val KEY_DARK_THEME_ENABLED = "dark_theme_enabled"
     private const val KEY_VOLUME_THRESHOLD = "volume_threshold"
     private const val KEY_PROTECTION_INTERVAL_MINUTES = "protection_interval_minutes"
@@ -22,15 +23,16 @@ object AppSettings {
     private const val KEY_CONFIRMATION_PERIOD_MINUTES = "confirmation_period_minutes"
     private const val KEY_USAGE_SAMPLE_SAVING_ENABLED = "usage_sample_saving_enabled"
 
-    fun isAboutScreenSeen(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_ABOUT_SCREEN_SEEN, false)
+    fun isOnboardingCompleted(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        // Пользователи прежних версий уже знакомились с приложением через "О программе".
+        return prefs.getBoolean(KEY_ONBOARDING_COMPLETED, prefs.getBoolean(KEY_ABOUT_SCREEN_SEEN, false))
     }
 
-    fun setAboutScreenSeen(context: Context, seen: Boolean) {
+    fun completeOnboarding(context: Context) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(KEY_ABOUT_SCREEN_SEEN, seen)
+            .putBoolean(KEY_ONBOARDING_COMPLETED, true)
             .apply()
     }
 

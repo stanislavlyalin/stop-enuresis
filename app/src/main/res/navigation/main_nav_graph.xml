@@ -5,6 +5,11 @@
     app:startDestination="@id/aboutFragment">
 
     <fragment
+        android:id="@+id/onboardingFragment"
+        android:name="com.stanislavlyalin.stopenuresis.ui.OnboardingFragment"
+        android:label="@string/onboardingWelcomeTitle" />
+
+    <fragment
         android:id="@+id/aboutFragment"
         android:name="com.stanislavlyalin.stopenuresis.ui.AboutFragment"
         android:label="@string/about" />

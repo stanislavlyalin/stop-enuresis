@@ -10,8 +10,10 @@ material = "1.13.0"
 mpandroidchart = "3.1.0"
 navigationFragmentKtx = "2.9.7"
 navigationUiKtx = "2.9.7"
+viewpager2 = "1.1.0"
 
 [libraries]
+androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
