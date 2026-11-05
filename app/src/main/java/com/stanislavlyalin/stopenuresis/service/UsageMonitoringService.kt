@@ -51,6 +51,7 @@ class UsageMonitoringService : Service() {
     private val usageState get() = cycle.state
     private var audioRecord: AudioRecord? = null
     private var listeningThread: Thread? = null
+    private var reviewAlarmRecorded = false
     private var toneGenerator: ToneGenerator? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var confirmation = RustlingConfirmation(
@@ -229,7 +230,7 @@ class UsageMonitoringService : Service() {
                         if (result.alarm) {
                             alarmTriggerPosted = true
                             mainHandler.post {
-                                if (recordingActive.get() && usageState == STATE_MONITORING) triggerAlarm()
+                                if (recordingActive.get() && usageState == STATE_MONITORING) triggerAlarm(model.accuracy)
                             }
                         }
                     }
@@ -266,8 +267,9 @@ class UsageMonitoringService : Service() {
         confirmation.reset()
     }
 
-    private fun triggerAlarm() {
+    private fun triggerAlarm(accuracy: Double) {
         if (!cycle.alarm()) return
+        reviewAlarmRecorded = com.stanislavlyalin.stopenuresis.review.ReviewHistory(this).alarmStarted(System.currentTimeMillis(), accuracy)
         stopListening()
         toneGenerator = ToneGenerator(AudioManager.STREAM_ALARM, ALARM_VOLUME_PERCENT)
         mainHandler.removeCallbacks(alarmTick)
@@ -278,6 +280,8 @@ class UsageMonitoringService : Service() {
 
     private fun turnOffAlarm() {
         if (!cycle.dismiss(SystemClock.elapsedRealtime(), protectionMillis())) return
+        if (reviewAlarmRecorded) com.stanislavlyalin.stopenuresis.review.ReviewHistory(this).alarmDismissed()
+        reviewAlarmRecorded = false
         stopAlarm()
         schedulePause()
     }
