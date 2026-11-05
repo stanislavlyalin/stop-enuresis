@@ -36,16 +36,26 @@ object AppSettings {
             .apply()
     }
 
-    fun isDarkThemeEnabled(context: Context): Boolean {
-        return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .getBoolean(KEY_DARK_THEME_ENABLED, false)
+    enum class ThemeMode { SYSTEM, LIGHT, DARK }
+
+    fun getThemeMode(context: Context): ThemeMode {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val stored = prefs.getString("theme_mode", null)
+        return ThemeMode.entries.firstOrNull { it.name == stored }
+            ?: if (prefs.contains(KEY_DARK_THEME_ENABLED)) {
+                if (prefs.getBoolean(KEY_DARK_THEME_ENABLED, false)) ThemeMode.DARK else ThemeMode.LIGHT
+            } else ThemeMode.SYSTEM
     }
 
-    fun setDarkThemeEnabled(context: Context, enabled: Boolean) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putBoolean(KEY_DARK_THEME_ENABLED, enabled)
-            .apply()
+    fun setThemeMode(context: Context, mode: ThemeMode) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
+            .putString("theme_mode", mode.name).apply()
+    }
+
+    fun nightMode(context: Context): Int = when (getThemeMode(context)) {
+        ThemeMode.SYSTEM -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        ThemeMode.LIGHT -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_NO
+        ThemeMode.DARK -> androidx.appcompat.app.AppCompatDelegate.MODE_NIGHT_YES
     }
 
     fun getVolumeThreshold(context: Context): Int {

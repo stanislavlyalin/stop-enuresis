@@ -8,12 +8,15 @@
         <item name="colorSecondary">@color/brand_orange_dark</item>
         <item name="colorOnSecondary">@color/white</item>
         <item name="colorSurface">@color/brand_surface</item>
-        <item name="colorOnSurface">@color/brand_on_orange</item>
+        <item name="colorOnSurface">@color/ui_text</item>
+        <item name="android:textColorPrimary">@color/ui_text</item>
+        <item name="android:textColorSecondary">@color/ui_secondary</item>
+        <item name="android:windowBackground">@color/brand_surface</item>
         <item name="colorSurfaceVariant">@color/brand_surface_variant</item>
         <item name="colorOutline">@color/brand_outline</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
         <item name="android:navigationBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
     <style name="Theme.StopEnuresis.Alarm" parent="Theme.StopEnuresis">

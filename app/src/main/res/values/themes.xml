@@ -9,7 +9,10 @@
         <item name="colorSecondary">@color/brand_orange_dark</item>
         <item name="colorOnSecondary">@color/white</item>
         <item name="colorSurface">@color/brand_surface</item>
-        <item name="colorOnSurface">@color/brand_on_orange</item>
+        <item name="colorOnSurface">@color/ui_text</item>
+        <item name="android:textColorPrimary">@color/ui_text</item>
+        <item name="android:textColorSecondary">@color/ui_secondary</item>
+        <item name="android:windowBackground">@color/brand_surface</item>
         <item name="colorSurfaceVariant">@color/brand_surface_variant</item>
         <item name="colorOutline">@color/brand_outline</item>
         <item name="android:statusBarColor">?attr/colorSurface</item>
@@ -25,11 +28,11 @@
 
     <style name="BottomNavigationItemText">
         <item name="android:ellipsize">none</item>
-        <item name="android:fontFamily">sans-serif-condensed</item>
-        <item name="android:lines">1</item>
-        <item name="android:maxLines">1</item>
-        <item name="android:singleLine">true</item>
-        <item name="android:textSize">8sp</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:lines">2</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:singleLine">false</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
 </resources>

@@ -17,8 +17,8 @@
     <color name="brand_orange_light">#FFF2CC</color>
     <color name="brand_orange_border">#E69500</color>
     <color name="brand_on_orange">#FF1F1400</color>
-    <color name="brand_surface">#FFFFFFFF</color>
-    <color name="brand_surface_variant">#FFFFF8EA</color>
+    <color name="brand_surface">#FFF8EA</color>
+    <color name="brand_surface_variant">#FFF2DF</color>
     <color name="brand_outline">#FFD8A94A</color>
     <color name="rustling">#FFC62828</color>
     <color name="black">#FF000000</color>

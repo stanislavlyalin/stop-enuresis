@@ -24,10 +24,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
     private lateinit var seekBarCooldown: SeekBar
     private lateinit var tvCooldownValue: TextView
-    private lateinit var switchDarkTheme: Switch
-    private lateinit var seekBarAlarmRustlingEpisodes: SeekBar
+    private lateinit var themeChoice: com.google.android.material.button.MaterialButtonToggleGroup
     private lateinit var tvAlarmRustlingEpisodesValue: TextView
-    private lateinit var seekBarConfirmationPeriod: SeekBar
     private lateinit var tvConfirmationPeriodValue: TextView
     private lateinit var tvAppVersion: TextView
     private lateinit var btnExportModel: Button
@@ -44,10 +42,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
         seekBarCooldown = view.findViewById(R.id.seekBarCooldown)
         tvCooldownValue = view.findViewById(R.id.tvCooldownValue)
-        switchDarkTheme = view.findViewById(R.id.switchDarkTheme)
-        seekBarAlarmRustlingEpisodes = view.findViewById(R.id.seekBarAlarmRustlingEpisodes)
+        themeChoice = view.findViewById(R.id.themeChoice)
         tvAlarmRustlingEpisodesValue = view.findViewById(R.id.tvAlarmRustlingEpisodesValue)
-        seekBarConfirmationPeriod = view.findViewById(R.id.seekBarConfirmationPeriod)
         tvConfirmationPeriodValue = view.findViewById(R.id.tvConfirmationPeriodValue)
         tvAppVersion = view.findViewById(R.id.tvAppVersion)
         btnExportModel = view.findViewById(R.id.btnExportModel)
@@ -62,16 +58,13 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupDarkThemeSetting() {
-        switchDarkTheme.isChecked = AppSettings.isDarkThemeEnabled(requireContext())
-        switchDarkTheme.setOnCheckedChangeListener { _, checked ->
-            AppSettings.setDarkThemeEnabled(requireContext(), checked)
-            AppCompatDelegate.setDefaultNightMode(
-                if (checked) {
-                    AppCompatDelegate.MODE_NIGHT_YES
-                } else {
-                    AppCompatDelegate.MODE_NIGHT_NO
-                }
-            )
+        val ids = listOf(R.id.themeSystem, R.id.themeLight, R.id.themeDark)
+        themeChoice.check(ids[AppSettings.getThemeMode(requireContext()).ordinal])
+        themeChoice.addOnButtonCheckedListener { _, id, checked ->
+            if (checked) {
+                AppSettings.setThemeMode(requireContext(), AppSettings.ThemeMode.entries[ids.indexOf(id)])
+                AppCompatDelegate.setDefaultNightMode(AppSettings.nightMode(requireContext()))
+            }
         }
     }
 
@@ -105,54 +98,31 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupAlarmRustlingEpisodesSetting() {
-        seekBarAlarmRustlingEpisodes.max = 11
-        val value = AppSettings.getAlarmRustlingEpisodes(requireContext())
-        seekBarAlarmRustlingEpisodes.progress = value - 1
-        updateAlarmRustlingEpisodesValue(value)
-
-        seekBarAlarmRustlingEpisodes.setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    val episodes = progress + 1
-                    updateAlarmRustlingEpisodesValue(episodes)
-                    if (fromUser) {
-                        AppSettings.setAlarmRustlingEpisodes(requireContext(), episodes)
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-            }
-        )
-    }
-
-    private fun updateAlarmRustlingEpisodesValue(value: Int) {
-        tvAlarmRustlingEpisodesValue.text = getString(R.string.integerValue, value)
+        setupStepper(R.id.episodesMinus, R.id.episodesPlus, 1, 12,
+            { AppSettings.getAlarmRustlingEpisodes(requireContext()) },
+            { AppSettings.setAlarmRustlingEpisodes(requireContext(), it) },
+            { tvAlarmRustlingEpisodesValue.text = it.toString() })
     }
 
     private fun setupConfirmationPeriodSetting() {
-        seekBarConfirmationPeriod.max = 9
-        val minutes = AppSettings.getConfirmationPeriodMinutes(requireContext())
-        seekBarConfirmationPeriod.progress = minutes - 1
-        tvConfirmationPeriodValue.text = getString(R.string.confirmationPeriodValue, minutes)
-        seekBarConfirmationPeriod.setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                    val value = progress + 1
-                    tvConfirmationPeriodValue.text =
-                        getString(R.string.confirmationPeriodValue, value)
-                    if (fromUser) AppSettings.setConfirmationPeriodMinutes(requireContext(), value)
-                }
+        setupStepper(R.id.periodMinus, R.id.periodPlus, 1, 10,
+            { AppSettings.getConfirmationPeriodMinutes(requireContext()) },
+            { AppSettings.setConfirmationPeriodMinutes(requireContext(), it) },
+            { tvConfirmationPeriodValue.text = getString(R.string.confirmationPeriodValue, it) })
+    }
 
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-            }
-        )
+    private fun setupStepper(minusId: Int, plusId: Int, min: Int, max: Int,
+        read: () -> Int, save: (Int) -> Unit, display: (Int) -> Unit) {
+        val minus = requireView().findViewById<Button>(minusId)
+        val plus = requireView().findViewById<Button>(plusId)
+        fun update(value: Int) {
+            display(value)
+            minus.isEnabled = value > min
+            plus.isEnabled = value < max
+        }
+        minus.setOnClickListener { val value = (read() - 1).coerceIn(min, max); save(value); update(value) }
+        plus.setOnClickListener { val value = (read() + 1).coerceIn(min, max); save(value); update(value) }
+        update(read())
     }
 
     private fun updateCooldownValue(progress: Int) {

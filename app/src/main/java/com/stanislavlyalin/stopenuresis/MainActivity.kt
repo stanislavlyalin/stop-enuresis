@@ -36,13 +36,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        AppCompatDelegate.setDefaultNightMode(
-            if (AppSettings.isDarkThemeEnabled(this)) {
-                AppCompatDelegate.MODE_NIGHT_YES
-            } else {
-                AppCompatDelegate.MODE_NIGHT_NO
-            }
-        )
+        AppCompatDelegate.setDefaultNightMode(AppSettings.nightMode(this))
 
         super.onCreate(savedInstanceState)
         AppStorage.migrateLegacyData(this)
@@ -61,8 +55,8 @@ class MainActivity : AppCompatActivity() {
             window.navigationBarColor = background
             val night = resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
             WindowInsetsControllerCompat(window, window.decorView).apply {
-                isAppearanceLightStatusBars = !tour || !night
-                isAppearanceLightNavigationBars = !tour || !night
+                isAppearanceLightStatusBars = !night
+                isAppearanceLightNavigationBars = !night
             }
         }
         setStartDestination(getStartDestination())
@@ -136,24 +130,10 @@ class MainActivity : AppCompatActivity() {
     private fun updateDataCollectionNavTitle() {
         val pendingSamplesCount = pendingSamplesCount()
         val menuItem = bottomNavigationView.menu.findItem(R.id.dataCollectionFragment)
-        menuItem.title = if (pendingSamplesCount > 0) {
-            buildDataCollectionNavTitle(pendingSamplesCount)
-        } else {
-            getString(R.string.bottomNavCollectData)
-        }
-    }
-
-    private fun buildDataCollectionNavTitle(pendingSamplesCount: Int): CharSequence {
-        val baseTitle = getString(R.string.bottomNavCollectData)
-        val counter = getString(R.string.bottomNavCollectDataCounter, pendingSamplesCount)
-        return SpannableString(baseTitle + counter).apply {
-            setSpan(
-                ForegroundColorSpan(Color.RED),
-                baseTitle.length,
-                length,
-                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-        }
+        menuItem.title = getString(R.string.bottomNavCollectData)
+        if (pendingSamplesCount > 0) {
+            bottomNavigationView.getOrCreateBadge(R.id.dataCollectionFragment).number = pendingSamplesCount
+        } else bottomNavigationView.removeBadge(R.id.dataCollectionFragment)
     }
 
     private fun pendingSamplesCount(): Int {
