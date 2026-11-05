@@ -59,8 +59,16 @@ class MainActivity : AppCompatActivity() {
                 isAppearanceLightNavigationBars = !night
             }
         }
-        setStartDestination(getStartDestination())
+        val restoredDestination = savedInstanceState?.getInt("current_destination", 0)
+            ?.takeIf { it in setOf(R.id.aboutFragment, R.id.dataCollectionFragment,
+                R.id.trainingFragment, R.id.usageFragment, R.id.settingsFragment, R.id.onboardingFragment) }
+        setStartDestination(restoredDestination ?: getStartDestination())
         updateDataCollectionNavTitle()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        navController.currentDestination?.id?.let { outState.putInt("current_destination", it) }
+        super.onSaveInstanceState(outState)
     }
 
     override fun onStart() {
