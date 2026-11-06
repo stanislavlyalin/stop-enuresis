@@ -1,6 +1,8 @@
 Стоп Энурез 1.1.0 - материалы RuStore
 
 description.txt - название, слоган, краткое и полное описание.
+icon.png - иконка 512x512 без прозрачности, конвертирована ImageMagick
+из mipmap-xxxhdpi/ic_launcher.webp (192x192).
 set-01-cream/01.png ... 06.png - готовые скриншоты в порядке загрузки.
 assets/backgrounds/01-cream.png - выбранный фон для следующих версий.
 
