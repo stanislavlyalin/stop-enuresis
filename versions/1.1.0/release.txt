@@ -1,0 +1,8 @@
+Подписанный релизный APK
+/home/slyalin/work/projects/Android/StopEnurez/app/build/outputs/apk/release/stop-enuresis-fb47109.apk
+
+Версия: 1.1.0 (код 6)
+SHA-256 APK: 890ffa5c6a0c8d3d5c52ab124dab1dae754ef12daea10e3e0dea3507c3ef1f56
+SHA-256 сертификата: 7f37bc634c2a1f144de8bf4b98d5cefb84a87f20ffcd8cd4883f9d2666fc90d8
+
+Подпись проверена apksigner и сопоставлена с ключом из signing.properties.
