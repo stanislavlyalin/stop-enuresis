@@ -30,7 +30,7 @@
     <string name="bottomNavUsage">Запуск</string>
     <string name="bottomNavSettings">Настройки</string>
     <string name="bottomNavCollectDataCounter">(%1$d)</string>
-    <string name="volumeThreshold">Порог срабатывания</string>
+    <string name="volumeThreshold">Порог громкости</string>
     <string name="volumeThresholdValue">Порог срабатывания: %1$d</string>
     <string name="silenceCounterInitial">тишина: 0</string>
     <string name="remainingCounterInitial">осталось: 0</string>

@@ -1,0 +1,1 @@
+<ripple xmlns:android="http://schemas.android.com/apk/res/android" android:color="@color/ui_divider"><item><inset android:inset="9dp"><shape android:shape="oval"><solid android:color="@color/ui_play_circle"/></shape></inset></item></ripple>

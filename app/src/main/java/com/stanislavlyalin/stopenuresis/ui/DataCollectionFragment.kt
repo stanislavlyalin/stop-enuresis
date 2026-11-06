@@ -19,7 +19,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.SeekBar
+import com.google.android.material.slider.Slider
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +29,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.LimitLine
-import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -49,8 +48,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private lateinit var btnClearPendingSamples: ImageButton
     private lateinit var lineChartAmplitude: LineChart
     private lateinit var rvAudioFragments: RecyclerView
-    private lateinit var seekBarThreshold: SeekBar
-    private lateinit var tvThresholdLabel: TextView
+    private lateinit var seekBarThreshold: Slider
+    private lateinit var tvThresholdValue: TextView
     private lateinit var tvSilenceCounter: TextView
     private lateinit var tvRemainingCounter: TextView
     private lateinit var tvRustlingCounter: TextView
@@ -169,7 +168,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude = view.findViewById(R.id.lineChartAmplitude)
         rvAudioFragments = view.findViewById(R.id.rvAudioFragments)
         seekBarThreshold = view.findViewById(R.id.seekBarThreshold)
-        tvThresholdLabel = view.findViewById(R.id.tvThresholdLabel)
+        tvThresholdValue = view.findViewById(R.id.tvThresholdValue)
         tvSilenceCounter = view.findViewById(R.id.tvSilenceCounter)
         tvRemainingCounter = view.findViewById(R.id.tvRemainingCounter)
         tvRustlingCounter = view.findViewById(R.id.tvRustlingCounter)
@@ -214,8 +213,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun setRecordingState(state: RecordingState) {
-        view?.findViewById<TextView>(R.id.tvDataCollectionTitle)?.text = getString(
-            if (state == RecordingState.RECORDING) R.string.quiet_recording else R.string.collectData)
+        view?.findViewById<TextView>(R.id.recordingStatus)?.visibility =
+            if (state == RecordingState.RECORDING) View.VISIBLE else View.GONE
 
         recordingState = state
         btnRecordToggle.text = when (state) {
@@ -269,7 +268,9 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         lineChartAmplitude.axisLeft.setLabelCount(CHART_AXIS_LABEL_COUNT, true)
         lineChartAmplitude.axisLeft.setDrawGridLines(true)
 
-        lineChartAmplitude.xAxis.position = XAxis.XAxisPosition.BOTTOM
+        lineChartAmplitude.xAxis.isEnabled = false
+        lineChartAmplitude.axisLeft.textSize = 12f
+        lineChartAmplitude.axisLeft.axisLineColor = requireContext().getColor(R.color.ui_divider)
         lineChartAmplitude.xAxis.setDrawGridLines(false)
 
         val dataSet = LineDataSet(mutableListOf(), "Amplitude")
@@ -284,26 +285,17 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun setupThresholdSeekBar() {
-        seekBarThreshold.max = THRESHOLD_MAX
+        seekBarThreshold.valueTo = THRESHOLD_MAX.toFloat()
         currentThreshold = AppSettings.getVolumeThreshold(requireContext()).toFloat()
-        seekBarThreshold.progress = currentThreshold.toInt()
+        seekBarThreshold.value = currentThreshold
         updateThresholdValueLabel()
         updateThresholdLine()
-
-        seekBarThreshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                currentThreshold = progress.toFloat()
-                updateThresholdValueLabel()
-                updateThresholdLine()
-                if (fromUser) {
-                    AppSettings.setVolumeThreshold(requireContext(), progress)
-                }
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-            override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-        })
+        seekBarThreshold.addOnChangeListener { _, value, fromUser ->
+            currentThreshold = value
+            updateThresholdValueLabel()
+            updateThresholdLine()
+            if (fromUser) AppSettings.setVolumeThreshold(requireContext(), value.toInt())
+        }
     }
 
     private fun setupAudioFragmentsList() {
@@ -488,7 +480,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
             showTimePicker(endCalendar, isEnd = true, onChanged = ::updateDateTimeFields)
         }
 
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = com.google.android.material.dialog.MaterialAlertDialogBuilder(requireContext())
+            .setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.bg_quiet_dialog))
             .setTitle(R.string.clearPendingSamplesDialogTitle)
             .setView(dialogView)
             .setNegativeButton(R.string.cancel, null)
@@ -636,10 +629,16 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         updateSampleCounters()
     }
 
+    private fun counterLabel(label: String, count: Int): CharSequence =
+        android.text.SpannableString("$label $count").apply {
+            setSpan(android.text.style.StyleSpan(android.graphics.Typeface.BOLD),
+                label.length + 1, length, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+
     private fun updateSampleCounters() {
-        tvSilenceCounter.text = getString(R.string.silenceCounter, silenceFilesCount)
-        tvRemainingCounter.text = getString(R.string.remainingCounter, remainingFilesCount)
-        tvRustlingCounter.text = getString(R.string.rustlingCounter, rustlingFilesCount)
+        tvSilenceCounter.text = counterLabel("Тишина", silenceFilesCount)
+        tvRemainingCounter.text = counterLabel("Новые", remainingFilesCount)
+        tvRustlingCounter.text = counterLabel("Ёрзание", rustlingFilesCount)
     }
 
     private fun registerRecordingReceivers() {
@@ -770,7 +769,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     }
 
     private fun updateThresholdValueLabel() {
-        tvThresholdLabel.text = getString(R.string.volumeThresholdValue, currentThreshold.toInt())
+        tvThresholdValue.text = currentThreshold.toInt().toString()
     }
 
     private fun appendChartPoint(value: Float) {

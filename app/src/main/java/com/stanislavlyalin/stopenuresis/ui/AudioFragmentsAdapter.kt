@@ -71,7 +71,9 @@ class AudioFragmentsAdapter(
 
         fun bind(file: File, showDate: Boolean) {
             val date = itemView.findViewById<TextView>(R.id.sampleDate)
-            date.text = formatDisplayName(file).takeLast(10)
+            val dateText = formatDisplayName(file).takeLast(10)
+            val today = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault()).format(java.util.Date())
+            date.text = if (dateText == today) "Сегодня, $dateText" else dateText
             date.visibility = if (showDate) View.VISIBLE else View.GONE
             val isPlaying = file.absolutePath == playingFilePath
             val audioInfo = getAudioInfo(file)
@@ -82,7 +84,7 @@ class AudioFragmentsAdapter(
                 tvFileName.setTypeface(null, Typeface.BOLD)
             } else {
                 tvFileName.setTextColor(ContextCompat.getColor(itemView.context, R.color.ui_text))
-                tvFileName.setTypeface(null, Typeface.NORMAL)
+                tvFileName.setTypeface(null, Typeface.BOLD)
             }
             tvAverageAmplitude.text = audioInfo.averageAmplitude.toString()
             waveformView.setWaveform(audioInfo.waveform)
