@@ -5,8 +5,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
-import android.widget.SeekBar
-import android.widget.Switch
+import com.google.android.material.slider.Slider
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,14 +21,14 @@ import org.json.JSONObject
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
-    private lateinit var seekBarCooldown: SeekBar
+    private lateinit var seekBarCooldown: Slider
     private lateinit var tvCooldownValue: TextView
     private lateinit var themeChoice: com.google.android.material.button.MaterialButtonToggleGroup
     private lateinit var tvAlarmRustlingEpisodesValue: TextView
     private lateinit var tvConfirmationPeriodValue: TextView
     private lateinit var tvAppVersion: TextView
-    private lateinit var btnExportModel: Button
-    private lateinit var btnImportModel: Button
+    private lateinit var btnExportModel: View
+    private lateinit var btnImportModel: View
 
     private val importModelLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -69,32 +68,18 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun setupCooldownSetting() {
-        seekBarCooldown.max = AppSettings.MAX_PROTECTION_INTERVAL_MINUTES /
-            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1
-        seekBarCooldown.progress = AppSettings.getProtectionIntervalMinutes(requireContext()) /
-            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1
-        updateCooldownValue(seekBarCooldown.progress)
-
-        seekBarCooldown.setOnSeekBarChangeListener(
-            object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(
-                    seekBar: SeekBar?,
-                    progress: Int,
-                    fromUser: Boolean
-                ) {
-                    updateCooldownValue(progress)
-                    if (fromUser) {
-                        AppSettings.setProtectionIntervalMinutes(
-                            requireContext(), (progress + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
-                        )
-                    }
-                }
-
-                override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
-
-                override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
-            }
-        )
+        seekBarCooldown.valueTo = (AppSettings.MAX_PROTECTION_INTERVAL_MINUTES /
+            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1).toFloat()
+        seekBarCooldown.value = (AppSettings.getProtectionIntervalMinutes(requireContext()) /
+            AppSettings.PROTECTION_INTERVAL_STEP_MINUTES - 1).toFloat()
+        updateCooldownValue(seekBarCooldown.value.toInt())
+        seekBarCooldown.setLabelFormatter { cooldownText(it.toInt()) }
+        seekBarCooldown.addOnChangeListener { _, value, fromUser ->
+            updateCooldownValue(value.toInt())
+            if (fromUser) AppSettings.setProtectionIntervalMinutes(
+                requireContext(), (value.toInt() + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
+            )
+        }
     }
 
     private fun setupAlarmRustlingEpisodesSetting() {
@@ -126,10 +111,16 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     }
 
     private fun updateCooldownValue(progress: Int) {
-        tvCooldownValue.text = getString(
-            R.string.protectionIntervalValue,
-            (progress + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
-        )
+        tvCooldownValue.text = cooldownText(progress)
+    }
+
+    private fun cooldownText(progress: Int): String {
+        val minutes = (progress + 1) * AppSettings.PROTECTION_INTERVAL_STEP_MINUTES
+        return when (minutes) {
+            30 -> "30 мин"
+            60 -> "1 час"
+            else -> "${if (minutes % 60 == 0) (minutes / 60).toString() else (minutes / 60.0).toString()} часа"
+        }
     }
 
     private fun setupModelTransferButtons() {
