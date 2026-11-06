@@ -39,7 +39,7 @@
             </LinearLayout>
             <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:background="@drawable/bg_quiet_outline">
                 <androidx.appcompat.widget.AppCompatButton android:id="@+id/periodMinus" android:layout_width="48dp" android:layout_height="48dp" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:text="−" android:textSize="24sp" android:textColor="@color/ui_secondary" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Уменьшить: период подтверждения" />
-                <TextView android:layout_width="44dp" android:layout_height="wrap_content" android:text="2 мин" android:id="@+id/tvConfirmationPeriodValue" android:gravity="center" android:textStyle="bold" android:textSize="16sp" style="@style/QuietBody" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="2 мин" android:id="@+id/tvConfirmationPeriodValue" android:minWidth="44dp" android:paddingHorizontal="2dp" android:singleLine="true" android:gravity="center" android:textStyle="bold" android:textSize="16sp" style="@style/QuietBody" />
                 <androidx.appcompat.widget.AppCompatButton android:id="@+id/periodPlus" android:layout_width="48dp" android:layout_height="48dp" android:minWidth="0dp" android:minHeight="0dp" android:padding="0dp" android:text="+" android:textSize="24sp" android:textColor="@color/ui_secondary" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="Увеличить: период подтверждения" />
             </LinearLayout>
         </LinearLayout>
