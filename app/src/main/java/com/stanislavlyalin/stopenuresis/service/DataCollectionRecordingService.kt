@@ -126,10 +126,10 @@ class DataCollectionRecordingService : Service() {
         audioRecord = record
         silenceFilesCount = 0
         rustlingFilesCount = 0
+        record.startRecording()
+        recordingStartedAt = android.os.SystemClock.elapsedRealtime()
         isRecording.set(true)
         broadcastStatus()
-
-        record.startRecording()
 
         recordingThread = thread(start = true, name = "DataCollectionRecordingServiceThread") {
             val buffer = ShortArray(bufferSize / 2)
@@ -177,6 +177,7 @@ class DataCollectionRecordingService : Service() {
         } catch (_: IllegalStateException) {
         }
 
+        recordingStartedAt = 0L
         audioRecord?.release()
         audioRecord = null
         recordingThread?.join(300)
@@ -227,6 +228,7 @@ class DataCollectionRecordingService : Service() {
         sendBroadcast(Intent(ACTION_STATUS).apply {
             setPackage(packageName)
             putExtra(EXTRA_IS_RECORDING, isRecording.get())
+            putExtra(EXTRA_RECORDING_STARTED_AT, recordingStartedAt)
             putExtra(EXTRA_SILENCE_COUNT, silenceFilesCount)
             putExtra(EXTRA_RUSTLING_COUNT, rustlingFilesCount)
         })
@@ -291,6 +293,11 @@ class DataCollectionRecordingService : Service() {
         const val ACTION_CHART_POINTS = "com.stanislavlyalin.stopenuresis.DATA_COLLECTION_CHART_POINTS"
         const val ACTION_SAMPLES_CHANGED =
             "com.stanislavlyalin.stopenuresis.DATA_COLLECTION_SAMPLES_CHANGED"
+        const val EXTRA_RECORDING_STARTED_AT = "recordingStartedAt"
+        @Volatile
+        var recordingStartedAt = 0L
+            private set
+
         const val EXTRA_IS_RECORDING = "isRecording"
         const val EXTRA_SILENCE_COUNT = "silenceCount"
         const val EXTRA_RUSTLING_COUNT = "rustlingCount"

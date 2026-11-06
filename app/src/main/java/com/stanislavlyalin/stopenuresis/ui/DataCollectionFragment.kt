@@ -109,7 +109,8 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
                 DataCollectionRecordingService.EXTRA_RUSTLING_COUNT,
                 0
             )
-            setRecordingState(if (isRecording) RecordingState.RECORDING else RecordingState.IDLE)
+            setRecordingState(if (isRecording) RecordingState.RECORDING else RecordingState.IDLE,
+                intent.getLongExtra(DataCollectionRecordingService.EXTRA_RECORDING_STARTED_AT, 0L))
             updateSampleCounters()
             refreshAudioFragmentsList()
         }
@@ -203,6 +204,7 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
 
     override fun onStop() {
         super.onStop()
+        view?.findViewById<android.widget.Chronometer>(R.id.recordingStatus)?.stop()
         unregisterRecordingReceivers()
         stopPlayback()
     }
@@ -212,9 +214,15 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
         super.onDestroyView()
     }
 
-    private fun setRecordingState(state: RecordingState) {
-        view?.findViewById<TextView>(R.id.recordingStatus)?.visibility =
-            if (state == RecordingState.RECORDING) View.VISIBLE else View.GONE
+    private fun setRecordingState(
+        state: RecordingState,
+        startedAt: Long = DataCollectionRecordingService.recordingStartedAt
+    ) {
+        val active = state == RecordingState.RECORDING && startedAt > 0L
+        view?.findViewById<android.widget.Chronometer>(R.id.recordingStatus)?.apply {
+            visibility = if (active) View.VISIBLE else View.GONE
+            if (active) { base = startedAt; start() } else stop()
+        }
 
         recordingState = state
         btnRecordToggle.text = when (state) {
@@ -257,6 +265,9 @@ class DataCollectionFragment : Fragment(R.layout.fragment_data_collection) {
     private fun setupChart() {
         lineChartAmplitude.description.isEnabled = false
         lineChartAmplitude.legend.isEnabled = false
+        lineChartAmplitude.setDrawBorders(true)
+        lineChartAmplitude.setBorderWidth(1f)
+        lineChartAmplitude.setBorderColor(requireContext().getColor(R.color.ui_divider))
         lineChartAmplitude.setTouchEnabled(false)
         lineChartAmplitude.setPinchZoom(false)
         lineChartAmplitude.setScaleEnabled(false)

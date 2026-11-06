@@ -3,7 +3,7 @@
         <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:text="@string/collectData" android:id="@+id/tvDataCollectionTitle" style="@style/QuietTitle" android:layout_weight="1" />
         <ImageButton android:id="@+id/btnClearPendingSamples" android:layout_width="48dp" android:layout_height="48dp" android:src="@drawable/ic_more" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/clearPendingSamples" app:tint="@color/ui_secondary" />
     </LinearLayout>
-    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Запись" android:id="@+id/recordingStatus" android:textSize="12sp" android:textColor="@color/ui_secondary" android:visibility="gone" style="@style/QuietBody" />
+    <Chronometer android:layout_width="match_parent" android:layout_height="wrap_content" android:format="@string/recording_elapsed" android:drawableStart="@drawable/ic_recording_dot" android:drawablePadding="6dp" android:gravity="center_vertical" android:id="@+id/recordingStatus" android:textSize="12sp" android:textColor="@color/ui_secondary" android:visibility="gone" style="@style/QuietBody" />
     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="0dp" android:layout_marginBottom="8dp" />
     <com.github.mikephil.charting.charts.LineChart android:id="@+id/lineChartAmplitude" android:layout_width="match_parent" android:layout_height="112dp" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
@@ -24,6 +24,6 @@
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="" android:id="@+id/tvRemainingCounter" android:textSize="14sp" style="@style/QuietBody" />
     </LinearLayout>
     <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
-    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvAudioFragments" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="8dp" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvAudioFragments" android:layout_marginEnd="-12dp" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingBottom="8dp" />
     <Button android:id="@+id/btnRecordToggle" android:layout_width="match_parent" android:layout_height="56dp" android:text="@string/startRecording" />
 </LinearLayout>

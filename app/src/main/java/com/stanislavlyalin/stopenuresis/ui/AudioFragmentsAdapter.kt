@@ -50,6 +50,14 @@ class AudioFragmentsAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_audio_fragment_placeholder, parent, false)
+        val menu = view.findViewById<ImageButton>(R.id.btnDelete)
+        val row = menu.parent as View
+        row.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            val bounds = android.graphics.Rect()
+            menu.getHitRect(bounds)
+            bounds.right += (12 * view.resources.displayMetrics.density).toInt()
+            row.touchDelegate = android.view.TouchDelegate(bounds, menu)
+        }
         return ViewHolder(view)
     }
 

@@ -127,4 +127,5 @@
     <string name="protectionIntervalValue">%1$d мин</string>
     <string name="usagePaused">Пауза</string>
     <string name="usagePauseUntil">Пауза до %1$s</string>
+    <string name="recording_elapsed">Запись %s</string>
 </resources>

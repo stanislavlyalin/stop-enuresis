@@ -48,6 +48,12 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         btnExportModel = view.findViewById(R.id.btnExportModel)
         btnImportModel = view.findViewById(R.id.btnImportModel)
 
+        // Одинаковая ширина обоих полей учитывает максимальное значение и масштаб шрифта.
+        val valueWidth = kotlin.math.ceil(tvConfirmationPeriodValue.paint.measureText("10 мин") +
+            8 * resources.displayMetrics.density).toInt()
+        listOf(tvAlarmRustlingEpisodesValue, tvConfirmationPeriodValue).forEach {
+            it.layoutParams = it.layoutParams.apply { width = valueWidth }
+        }
         setupDarkThemeSetting()
         setupCooldownSetting()
         setupAlarmRustlingEpisodesSetting()
