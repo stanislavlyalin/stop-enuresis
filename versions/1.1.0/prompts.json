@@ -1,0 +1,17 @@
+{
+  "generator": "built-in imagegen",
+  "variants": [
+    {
+      "name": "01-cream",
+      "prompt": "Use case: ads-marketing. Create a premium portrait 9:16 background for Android app store screenshot cards for a gentle parent-facing child nighttime audio alarm app. This is a CLEAN BACKGROUND ONLY, no text, no lettering, no phone, no UI, no people, no logos. Keep upper 30 percent and central 70 percent of width very quiet, smooth and empty for future text and a large screenshot. Decoration only at outer edges and bottom corners, understated elegant and minimal. Warm yellow orange brand. Light warm ivory and cream background with faint honey golden light at bottom right and subtle soft translucent rounded layers along the bottom and outer edge. Very restrained, sophisticated editorial design, abundant negative space, almost imperceptible fine paper texture. Calm and readable."
+    },
+    {
+      "name": "02-night",
+      "prompt": "Use case: ads-marketing. Create a premium portrait 9:16 background for Android app store screenshot cards for a gentle parent-facing child nighttime audio alarm app. This is a CLEAN BACKGROUND ONLY, no text, no lettering, no phone, no UI, no people, no logos. Keep upper 30 percent and central 70 percent of width very quiet, smooth and empty for future text and a large screenshot. Decoration only at outer edges and bottom corners, understated elegant and minimal. Warm yellow orange brand. Deep warm espresso brown night background, smooth restrained amber glow at the lower edge, a tiny delicate crescent moon near the extreme upper right edge and only a few very small dim gold stars along the outer margins. Central area dark and uncluttered. Cozy calm luxurious evening atmosphere, no purple or blue."
+    },
+    {
+      "name": "03-watercolor",
+      "prompt": "Use case: ads-marketing. Create a premium portrait 9:16 background for Android app store screenshot cards for a gentle parent-facing child nighttime audio alarm app. This is a CLEAN BACKGROUND ONLY, no text, no lettering, no phone, no UI, no people, no logos. Keep upper 30 percent and central 70 percent of width very quiet, smooth and empty for future text and a large screenshot. Decoration only at outer edges and bottom corners, understated elegant and minimal. Warm yellow orange brand. Warm milky cream paper background with delicate hand-painted watercolor washes in pale apricot and muted honey yellow flowing only from the bottom corners and narrow side edges. A few very faint watercolor cloud-like organic shapes near bottom. Airy handmade softness, sophisticated restrained palette. Not busy, not childish clip art."
+    }
+  ]
+}
