@@ -1,1 +1,9 @@
-<resources><color name="ui_text">#1F1400</color><color name="ui_secondary">#674718</color><color name="ui_divider">#DED0BA</color></resources>
+<resources>
+    <color name="ui_text">#1F1400</color>
+    <color name="ui_secondary">#674718</color>
+    <color name="ui_divider">#DED0BA</color>
+    <color name="ui_background_start">#FFF9F0</color>
+    <color name="ui_background_end">#FFF3E2</color>
+    <color name="ui_slider_track">#E5CFAD</color>
+    <color name="ui_play_circle">#FFE297</color>
+</resources>

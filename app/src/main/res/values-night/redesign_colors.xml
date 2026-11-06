@@ -1,1 +1,11 @@
-<resources><color name="brand_surface">#14110D</color><color name="brand_surface_variant">#21170E</color><color name="ui_text">#FFF2CC</color><color name="ui_secondary">#EEDBB3</color><color name="ui_divider">#594831</color></resources>
+<resources>
+    <color name="brand_surface">#14110D</color>
+    <color name="brand_surface_variant">#21170E</color>
+    <color name="ui_text">#FFF2CC</color>
+    <color name="ui_secondary">#EEDBB3</color>
+    <color name="ui_divider">#594831</color>
+    <color name="ui_background_start">#21180F</color>
+    <color name="ui_background_end">#110E0A</color>
+    <color name="ui_slider_track">#70604C</color>
+    <color name="ui_play_circle">#FFD16A</color>
+</resources>

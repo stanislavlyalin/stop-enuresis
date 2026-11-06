@@ -1,72 +1,45 @@
-<?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string
-    name="quiet_aboutTitle">О программе</string>
-    <string
-    name="quiet_brandHeading">Стоп Энурез</string>
-    <string
-    name="quiet_brandBody">Ночной аудиоконтроль и пробуждение ребёнка</string>
-    <string
-    name="quiet_howHeading">Как это работает</string>
-    <string
-    name="quiet_howBody">Телефон распознаёт звуки ёрзания и включает будильник, чтобы ребёнок проснулся и сходил в туалет.</string>
-    <string
-    name="quiet_stepsHeading">С чего начать</string>
-    <string
-    name="quiet_stepsBody">1. Соберите примеры\nЗаписывайте звуки у кровати. Отмечайте ёрзание и остальные звуки.\n\n2. Обучите модель\nЗапустите обучение на своих размеченных записях.\n\n3. Включите на ночь\nПоставьте телефон рядом с кроватью и нажмите \"Начать слушать\".</string>
-    <string
-    name="quiet_cycleHeading">Ночной цикл</string>
-    <string
-    name="quiet_cycleBody">Пауза → Прослушивание → Будильник → Пауза</string>
-    <string
-    name="quiet_intervalHeading">Защитный интервал</string>
-    <string
-    name="quiet_intervalBody">По умолчанию 1 час. В паузе микрофон отключён. Длительность от 30 минут до 3 часов задаётся в настройках.</string>
-    <string
-    name="quiet_privacyHeading">Ваши данные</string>
-    <string
-    name="quiet_privacyBody">Без регистрации и интернета. Записи и модель хранятся на телефоне.</string>
-    <string
-    name="quiet_noteHeading">Важно</string>
-    <string
-    name="quiet_noteBody">Вспомогательный инструмент. Не заменяет консультацию специалиста.</string>
-    <string
-    name="quiet_trainingTitle">Обучение</string>
-    <string
-    name="quiet_tvTrainingStatusCircle">Модель не обучена</string>
-    <string
-    name="quiet_trainingMetrics" />
-    <string
-    name="quiet_datasetHeading">Обучающая выборка</string>
-    <string
-    name="quiet_tvTrainingDatasetStats" />
-    <string
-    name="quiet_btnStartTraining">Обучить заново</string>
-    <string
-    name="quiet_tvTrainingProgress">Обучение</string>
-    <string
-    name="quiet_btnClearTrainingDataset">Очистить выборку</string>
-    <string
-    name="quiet_usageTitle">Запуск</string>
-    <string
-    name="quiet_tvUsageStatusCircle">Готово к запуску</string>
-    <string
-    name="quiet_usageMicrophone">Микрофон отключён</string>
-    <string
-    name="quiet_tvNextAlarmAllowed" />
-    <string
-    name="quiet_btnUsageMain">Начать слушать</string>
-    <string
-    name="quiet_model_trained">Модель обучена</string>
-    <string
-    name="quiet_metrics">Точность %1$d%% · Порог %2$d</string>
-    <string
-    name="quiet_dataset_summary">Ёрзание: %1$d записей\nУровень %2$s\n\nТишина: %3$d записей\nУровень %4$s\n\nВсего: %5$d примеров</string>
-    <string
-    name="quiet_ready">Готово к запуску</string>
-    <string
-    name="quiet_mic_on">Микрофон включён</string>
-    <string
-    name="quiet_mic_off">Микрофон отключён</string>
-<string
-    name="quiet_recording">Сбор данных · Запись</string><string name="quiet_save_fragments">Сохранять фрагменты</string></resources>
+    <string name="quiet_aboutTitle">О программе</string>
+    <string name="quiet_brandHeading">Стоп Энурез</string>
+    <string name="quiet_brandBody">Ночной аудиоконтроль и пробуждение ребёнка</string>
+    <string name="quiet_howHeading">Как это работает</string>
+    <string name="quiet_howBody">Телефон распознаёт звуки ёрзания и включает будильник, чтобы ребёнок проснулся и сходил в туалет.</string>
+    <string name="quiet_stepsHeading">С чего начать</string>
+    <string name="quiet_stepsBody">1. Соберите примеры\nЗаписывайте звуки у кровати. Отмечайте ёрзание и остальные звуки.\n\n2. Обучите модель\nЗапустите обучение на своих размеченных записях.\n\n3. Включите на ночь\nПоставьте телефон рядом с кроватью и нажмите \"Начать слушать\".</string>
+    <string name="quiet_cycleHeading">Ночной цикл</string>
+    <string name="quiet_cycleBody">Пауза → Прослушивание → Будильник → Пауза</string>
+    <string name="quiet_intervalHeading">Защитный интервал</string>
+    <string name="quiet_intervalBody">По умолчанию 1 час. В паузе микрофон отключён. Длительность от 30 минут до 3 часов задаётся в настройках.</string>
+    <string name="quiet_privacyHeading">Ваши данные</string>
+    <string name="quiet_privacyBody">Без регистрации и интернета. Записи и модель хранятся на телефоне.</string>
+    <string name="quiet_noteHeading">Важно</string>
+    <string name="quiet_noteBody">Вспомогательный инструмент. Не заменяет консультацию специалиста.</string>
+    <string name="quiet_trainingTitle">Обучение</string>
+    <string name="quiet_tvTrainingStatusCircle">Модель не обучена</string>
+    <string name="quiet_trainingMetrics" />
+    <string name="quiet_datasetHeading">Обучающая выборка</string>
+    <string name="quiet_tvTrainingDatasetStats" />
+    <string name="quiet_btnStartTraining">Обучить заново</string>
+    <string name="quiet_tvTrainingProgress">Обучение</string>
+    <string name="quiet_btnClearTrainingDataset">Очистить выборку</string>
+    <string name="quiet_usageTitle">Запуск</string>
+    <string name="quiet_tvUsageStatusCircle">Готово к запуску</string>
+    <string name="quiet_usageMicrophone">Микрофон отключён</string>
+    <string name="quiet_tvNextAlarmAllowed" />
+    <string name="quiet_btnUsageMain">Начать слушать</string>
+    <string name="quiet_model_trained">Модель обучена</string>
+    <string name="quiet_metrics">Точность %1$d%% · Порог %2$d</string>
+    <string name="quiet_dataset_summary">Ёрзание: %1$d записей\nУровень %2$s\n\nТишина: %3$d записей\nУровень %4$s\n\nВсего: %5$d примеров</string>
+    <string name="quiet_ready">Готово к запуску</string>
+    <string name="quiet_mic_on">Микрофон включён</string>
+    <string name="quiet_mic_off">Микрофон отключён</string>
+    <string name="quiet_recording">Сбор данных · Запись</string>
+    <string name="quiet_save_fragments">Сохранять фрагменты</string>
+    <string name="quiet_step_1_title">Соберите примеры</string>
+    <string name="quiet_step_1_body">Записывайте звуки у кровати. Отмечайте ёрзание и остальные звуки.</string>
+    <string name="quiet_step_2_title">Обучите модель</string>
+    <string name="quiet_step_2_body">Запустите обучение на своих размеченных записях.</string>
+    <string name="quiet_step_3_title">Включите на ночь</string>
+    <string name="quiet_step_3_body">Поставьте телефон рядом с кроватью и нажмите \"Начать слушать\".</string>
+    <string name="quiet_save_hint">Для пополнения обучающей выборки</string>
+</resources>

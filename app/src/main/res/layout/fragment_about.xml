@@ -1,110 +1,51 @@
-<?xml version='1.0' encoding='utf-8'?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingHorizontal="16dp"
-    android:paddingBottom="8dp">
-    <androidx.core.widget.NestedScrollView
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_weight="1"
-    android:fillViewport="true">
-        <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-            <TextView
-    android:id="@+id/aboutTitle"
-    style="@style/QuietTitle"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_aboutTitle" />
-            <TextView
-    android:id="@+id/brandHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_brandHeading" />
-            <TextView
-    android:id="@+id/brandBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_brandBody" />
-            <TextView
-    android:id="@+id/howHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_howHeading" />
-            <TextView
-    android:id="@+id/howBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_howBody" />
-            <TextView
-    android:id="@+id/stepsHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_stepsHeading" />
-            <TextView
-    android:id="@+id/stepsBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_stepsBody" />
-            <TextView
-    android:id="@+id/cycleHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_cycleHeading" />
-            <TextView
-    android:id="@+id/cycleBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_cycleBody" />
-            <TextView
-    android:id="@+id/intervalHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_intervalHeading" />
-            <TextView
-    android:id="@+id/intervalBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_intervalBody" />
-            <TextView
-    android:id="@+id/privacyHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_privacyHeading" />
-            <TextView
-    android:id="@+id/privacyBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_privacyBody" />
-            <TextView
-    android:id="@+id/noteHeading"
-    style="@style/QuietHeading"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_noteHeading" />
-            <TextView
-    android:id="@+id/noteBody"
-    style="@style/QuietBody"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/quiet_noteBody" />
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:paddingHorizontal="16dp" android:paddingBottom="16dp">
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_aboutTitle" android:id="@+id/aboutTitle" style="@style/QuietTitle" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingTop="4dp" android:paddingBottom="4dp">
+            <ImageView android:layout_width="32dp" android:layout_height="32dp" android:src="@drawable/ic_nav_wave" android:importantForAccessibility="no" app:tint="@color/brand_orange" android:layout_marginEnd="12dp" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_weight="1">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_brandHeading" android:paddingTop="0dp" android:paddingBottom="2dp" style="@style/QuietTitle" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_brandBody" style="@style/QuietBody" />
+            </LinearLayout>
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-<TextView android:id="@+id/aboutVersion" style="@style/QuietBody" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="16dp"/></LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_howHeading" style="@style/QuietHeading" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_howBody" style="@style/QuietBody" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_stepsHeading" style="@style/QuietHeading" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+            <TextView android:layout_width="22dp" android:layout_height="wrap_content" android:text="1." android:textStyle="bold" style="@style/QuietBody" android:layout_gravity="top" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_weight="1">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_1_title" android:textStyle="bold" style="@style/QuietBody" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_1_body" style="@style/QuietBody" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+            <TextView android:layout_width="22dp" android:layout_height="wrap_content" android:text="2." android:textStyle="bold" style="@style/QuietBody" android:layout_gravity="top" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_weight="1">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_2_title" android:textStyle="bold" style="@style/QuietBody" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_2_body" style="@style/QuietBody" />
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="4dp">
+            <TextView android:layout_width="22dp" android:layout_height="wrap_content" android:text="3." android:textStyle="bold" style="@style/QuietBody" android:layout_gravity="top" />
+            <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_weight="1">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_3_title" android:textStyle="bold" style="@style/QuietBody" />
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_step_3_body" style="@style/QuietBody" />
+            </LinearLayout>
+        </LinearLayout>
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_cycleHeading" style="@style/QuietHeading" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_cycleBody" style="@style/QuietBody" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_intervalHeading" style="@style/QuietHeading" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_intervalBody" style="@style/QuietBody" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_privacyHeading" style="@style/QuietHeading" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_privacyBody" style="@style/QuietBody" />
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/ui_divider" android:layout_marginTop="12dp" android:layout_marginBottom="8dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/quiet_noteBody" android:textStyle="italic" android:textColor="@color/ui_secondary" style="@style/QuietBody" />
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="" android:id="@+id/aboutVersion" android:layout_marginTop="16dp" android:textSize="12sp" android:textColor="@color/ui_secondary" style="@style/QuietBody" />
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
